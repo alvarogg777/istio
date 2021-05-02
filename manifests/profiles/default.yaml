@@ -97,6 +97,7 @@ spec:
         amd64: 2
         s390x: 2
         ppc64le: 2
+        arm64: 2
       oneNamespace: false
       defaultNodeSelector: {}
       configValidation: true

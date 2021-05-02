@@ -72,7 +72,7 @@ data:
           }
         },
         "externalIstiod": false,
-        "hub": "gcr.io/istio-testing",
+        "hub": "docker.io/querycap",
         "imagePullPolicy": "",
         "imagePullSecrets": [],
         "istioNamespace": "istio-system",
@@ -148,7 +148,7 @@ data:
         "sts": {
           "servicePort": 0
         },
-        "tag": "latest",
+        "tag": "1.9.4",
         "tracer": {
           "datadog": {
             "address": "$(HOST_IP):8126"
@@ -1004,7 +1004,7 @@ spec:
         fsGroup: 1337
       containers:
         - name: discovery
-          image: "gcr.io/istio-testing/pilot:latest"
+          image: "docker.io/querycap/pilot:1.9.4"
           args:
           - "discovery"
           - --monitoringAddr=:15014
