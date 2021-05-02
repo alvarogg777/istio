@@ -72,7 +72,7 @@ data:
           }
         },
         "externalIstiod": false,
-        "hub": "docker.io/querycap",
+        "hub": "docker.io/querycapistio",
         "imagePullPolicy": "",
         "imagePullSecrets": [],
         "istioNamespace": "istio-system",
@@ -1004,7 +1004,7 @@ spec:
         fsGroup: 1337
       containers:
         - name: discovery
-          image: "docker.io/querycap/pilot:1.9.4"
+          image: "docker.io/querycapistio/pilot:1.9.4"
           args:
           - "discovery"
           - --monitoringAddr=:15014
