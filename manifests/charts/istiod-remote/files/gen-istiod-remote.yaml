@@ -52,7 +52,7 @@ data:
           }
         },
         "externalIstiod": true,
-        "hub": "docker.io/querycap",
+        "hub": "docker.io/querycapistio",
         "imagePullPolicy": "",
         "imagePullSecrets": [],
         "istioNamespace": "istio-system",
