@@ -485,7 +485,7 @@ spec:
     spec:
       serviceAccountName: kiali
       containers:
-      - image: "quay.io/kiali/kiali:v1.29"
+      - image: "quay.io/rancher/kiali-kiali:v1.29.0"
         imagePullPolicy: Always
         name: kiali
         command:
