@@ -1469,6 +1469,8 @@ serverFiles:
           - source_labels: [__meta_kubernetes_pod_node_name]
             action: replace
             target_label: kubernetes_node
+            regex: (.*)
+            replacement: $1
 
       # Scrape config for slow service endpoints; same as above, but with a larger
       # timeout and a larger interval
