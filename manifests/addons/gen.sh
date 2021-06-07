@@ -28,7 +28,7 @@ mkdir -p "${ADDONS}"
 TMP=$(mktemp -d)
 # Set up kiali
 {
-helm3 template kiali-server \
+helm template kiali-server \
   --namespace istio-system \
   --version 1.31.0 \
   --include-crds \
@@ -40,7 +40,7 @@ helm3 template kiali-server \
 } > "${ADDONS}/kiali.yaml"
 
 # Set up prometheus
-helm3 template prometheus prometheus \
+helm template prometheus prometheus \
   --namespace istio-system \
   --version 13.6.0 \
   --repo https://prometheus-community.github.io/helm-charts \
@@ -53,7 +53,7 @@ function compressDashboard() {
 
 # Set up grafana
 {
-  helm3 template grafana grafana \
+  helm template grafana grafana \
     --namespace istio-system \
     --version 6.6.3 \
     --repo https://grafana.github.io/helm-charts \
