@@ -422,6 +422,7 @@ spec:
   resources:
     requests:
       storage: "2Gi"
+  storageClassName: longhorn
 ---
 # Source: prometheus/templates/server/pvc.yaml
 apiVersion: v1
@@ -441,6 +442,7 @@ spec:
   resources:
     requests:
       storage: "8Gi"
+  storageClassName: longhorn
 ---
 # Source: prometheus/charts/kube-state-metrics/templates/role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
