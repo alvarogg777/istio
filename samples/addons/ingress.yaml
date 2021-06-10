@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: istio-system
+  namespace: istio-system
+  annotations:
+    kubernetes.io/ingress.class: istio
+spec:
+  rules:
+  - host: my-grafana.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: grafana
+          servicePort: 3000
+  - host: my-tracing.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: zipkin
+          servicePort: 9411
+  - host: my-prometheus.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: prometheus
+          servicePort: 9090
+  - host: my-kiali.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: kiali
+          servicePort: 20001
+
