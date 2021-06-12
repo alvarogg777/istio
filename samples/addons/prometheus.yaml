@@ -965,6 +965,8 @@ spec:
         app.kubernetes.io/name: kube-state-metrics
         app.kubernetes.io/instance: "prometheus"
     spec:
+      imagePullSecrets:
+        - name: regcred
       hostNetwork: false
       serviceAccountName: prometheus-kube-state-metrics
       securityContext:
@@ -975,91 +977,59 @@ spec:
       - name: kube-state-metrics
         args:
 
-
         - --collectors=certificatesigningrequests
-
 
         - --collectors=configmaps
 
-
         - --collectors=cronjobs
-
 
         - --collectors=daemonsets
 
-
         - --collectors=deployments
-
 
         - --collectors=endpoints
 
-
         - --collectors=horizontalpodautoscalers
-
 
         - --collectors=ingresses
 
-
         - --collectors=jobs
-
 
         - --collectors=limitranges
 
-
         - --collectors=mutatingwebhookconfigurations
-
 
         - --collectors=namespaces
 
-
         - --collectors=networkpolicies
-
 
         - --collectors=nodes
 
-
         - --collectors=persistentvolumeclaims
-
 
         - --collectors=persistentvolumes
 
-
         - --collectors=poddisruptionbudgets
-
 
         - --collectors=pods
 
-
         - --collectors=replicasets
-
 
         - --collectors=replicationcontrollers
 
-
         - --collectors=resourcequotas
-
 
         - --collectors=secrets
 
-
         - --collectors=services
-
 
         - --collectors=statefulsets
 
-
         - --collectors=storageclasses
-
 
         - --collectors=validatingwebhookconfigurations
 
-
-
         - --collectors=volumeattachments
-
-
-
-
 
         - --telemetry-port=8081
         imagePullPolicy: IfNotPresent
