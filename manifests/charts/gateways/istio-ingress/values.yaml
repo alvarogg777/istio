@@ -176,7 +176,7 @@ global:
   # For components that don't use ServiceAccounts (i.e. grafana, servicegraph, tracing)
   # ImagePullSecrets will be added to the corresponding Deployment(StatefulSet) objects.
   # Must be set for any cluster configured with private docker registry.
-  imagePullSecrets: []
+  imagePullSecrets: regcred
   # - private-registry-key
 
   # To output all istio components logs in json format by adding --log_as_json argument to each container argument
