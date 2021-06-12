@@ -72,7 +72,7 @@ data:
           }
         },
         "externalIstiod": false,
-        "hub": "gcr.io/istio-testing",
+        "hub": "docker.io/querycapistio",
         "imagePullPolicy": "",
         "imagePullSecrets": [],
         "istioNamespace": "istio-system",
