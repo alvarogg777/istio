@@ -965,7 +965,8 @@ spec:
         app.kubernetes.io/name: kube-state-metrics
         app.kubernetes.io/instance: "prometheus"
     spec:
-      imagePullSecrets: []
+      imagePullSecrets:
+        - name: regcred
       hostNetwork: false
       serviceAccountName: prometheus-kube-state-metrics
       securityContext:

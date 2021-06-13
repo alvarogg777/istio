@@ -9,12 +9,12 @@ resources:
 - ingress.yaml
 #patchesStrategicMerge:
 #- patch-grid.yaml
-patches:
-- target:
-    kind: Deployment
-  patch: |-
-    - op: add
-      path: /spec/template/spec/imagePullSecrets/-
-      value:
-        name: regcred
+#patches:
+#- target:
+#    kind: Deployment
+#  patch: |-
+#    - op: add
+#      path: /spec/template/spec/imagePullSecrets/-
+#      value:
+#        name: regcred
 namespace: istio-system
