@@ -18,8 +18,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "14269"
     spec:
-      imagePullSecrets:
-        - name: regcred
+      imagePullSecrets: []
       containers:
         - name: jaeger
           image: "docker.io/querycapjaegertracing/all-in-one:1.21.0"

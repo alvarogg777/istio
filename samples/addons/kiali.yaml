@@ -484,8 +484,7 @@ spec:
         kiali.io/runtimes: go,kiali
         sidecar.istio.io/inject: "false"
     spec:
-      imagePullSecrets:
-        - name: regcred
+      imagePullSecrets: []
       serviceAccountName: kiali
       containers:
       - image: "quay.io/kiali/kiali:v1.34"
