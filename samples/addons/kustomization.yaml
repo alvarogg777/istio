@@ -17,4 +17,4 @@ patches:
       path: /spec/template/spec/imagePullSecrets/-
       value:
         name: regcred
-namespace: selenium-system
+namespace: istio-system
