@@ -1,0 +1,17 @@
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  creationTimestamp: null
+  name: regcred
+  namespace: istio-system
+spec:
+  encryptedData:
+    .dockerconfigjson: AgBWe6Ijz1VMJxWIv0k5PNHnJrbKsKu6uzSXZdoNmMp3PWp0Kxkl+NLtqCezoRnxlwLhFVTWFYH75SkXr/J9NIAizNx4ohYGw67dY/Uwv7Dth1WxjXnqFM0gmzWG7edkRGXeVfa+Wd2/WvTYiJhLSLZFNNMreseZVVmKwnH2dUA0FV7ETMmYOy07NJawf9/Aag/rnQvBgwYl1XeR7t82MLitXDoAB1gXiISiurNGM8OZdfaewOmEbwzPBe3LYUl36xOieLFcaY7n9rdTYjLFWc0X7Fl5xOjmkuR37R3LkfutUwww3BtQjf6KKjEaTEJAG6VHAisYXkgxDWfyKgE/c+Jq0yT/BFxaUk1eCENRfTono2VGXkF3af4Y+mm7D+UtZ8ziG+6bMK0l59iN9EwQ/ZoxetjIVpaZG3NPZT8HUF6w8yQGynMPIaSgTt3U7J+NLdypc36c4snJLPAZO37mrYyoeO7MRU8fgCYUV4UrfcgYSEoTADkk7P6scoNRI08EpJiiK3v48QQknHFeuik1TGB48Vu+Zi27nsVA1rt00RtbC1oPUCG5RF9+p2vaCK35Q4I2/ZCVFRWEPQIDX8H5pA3ertRmUfKAvRQsKr/iLcRvEcg8z2m30lHg0Ra2POOpc/A8uAzC6Ho0VIOsYwBTvo3avK8S/qcft12b7jycedbi0UpGY1L+BM/QixCyqYzY/XcNFTQrIJAImHZ4RMNdKzflT7UPawKZJWVeCe8369WF5pE8E3ZuoIyrGZPbbl4ehtl29YLbperFkCbEBsVW2M+NEY0CYHBwV+lhbtk63L68fdU9oXWoDvKuAVgw3lhpi4tivB0kz9rT5LBLNs9bP5FUMFTA5EFdXhloJ7aGUjkqE9F0ByRM/GvG2k0PV5sgJbXUaJVNL76R9oE8LC4VnHW1akY8McDp
+  template:
+    data: null
+    metadata:
+      creationTimestamp: null
+      name: regcred
+      namespace: istio-system
+    type: kubernetes.io/dockerconfigjson
+
