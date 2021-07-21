@@ -415,6 +415,8 @@ data:
             - name: REWRITE_PROBE_LEGACY_LOCALHOST_DESTINATION
               value: "true"
             {{- end }}
+            - name: TZ
+              value: Europe/Madrid
             - name: JWT_POLICY
               value: {{ .Values.global.jwtPolicy }}
             - name: PILOT_CERT_PROVIDER

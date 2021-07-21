@@ -160,7 +160,8 @@ spec:
               containerPort: 3000
               protocol: TCP
           env:
-            
+            - name: TZ
+              value: Europe/Madrid
             - name: "GF_AUTH_ANONYMOUS_ENABLED"
               value: "true"
             - name: "GF_AUTH_ANONYMOUS_ORG_ROLE"

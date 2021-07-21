@@ -88,6 +88,8 @@ spec:
     - name: {{ $key }}
       value: "{{ $value }}"
     {{- end }}
+    - name: TZ
+      value: Europe/Madrid
   {{- end }}
     resources:
   {{- if or (isset .ObjectMeta.Annotations `sidecar.istio.io/proxyCPU`) (isset .ObjectMeta.Annotations `sidecar.istio.io/proxyMemory`) (isset .ObjectMeta.Annotations `sidecar.istio.io/proxyCPULimit`) (isset .ObjectMeta.Annotations `sidecar.istio.io/proxyMemoryLimit`) }}
@@ -210,6 +212,8 @@ spec:
     - name: REWRITE_PROBE_LEGACY_LOCALHOST_DESTINATION
       value: "true"
     {{- end }}
+    - name: TZ
+      value: Europe/Madrid
     - name: JWT_POLICY
       value: {{ .Values.global.jwtPolicy }}
     - name: PILOT_CERT_PROVIDER

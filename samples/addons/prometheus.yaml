@@ -901,6 +901,9 @@ spec:
       containers:
         - name: prometheus-node-exporter
           image: "quay.io/prometheus/node-exporter:v1.0.1"
+          env:
+            - name: TZ
+              value: Europe/Madrid
           imagePullPolicy: "IfNotPresent"
           args:
             - --path.procfs=/host/proc
@@ -1034,6 +1037,9 @@ spec:
         - --telemetry-port=8081
         imagePullPolicy: IfNotPresent
         image: "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v1.9.8"
+        env:
+          - name: TZ
+            value: Europe/Madrid
         ports:
         - containerPort: 8080
         livenessProbe:
@@ -1083,6 +1089,8 @@ spec:
           image: "quay.io/prometheus/alertmanager:v0.21.0"
           imagePullPolicy: "IfNotPresent"
           env:
+            - name: TZ
+              value: Europe/Madrid
             - name: POD_IP
               valueFrom:
                 fieldRef:
@@ -1113,6 +1121,9 @@ spec:
         - name: prometheus-alertmanager-configmap-reload
           image: "jimmidyson/configmap-reload:v0.5.0"
           imagePullPolicy: "IfNotPresent"
+          env:
+            - name: TZ
+              value: Europe/Madrid
           args:
             - --volume-dir=/etc/config
             - --webhook-url=http://127.0.0.1:9093/-/reload
@@ -1168,6 +1179,9 @@ spec:
         - name: prometheus-pushgateway
           image: "prom/pushgateway:v1.3.1"
           imagePullPolicy: "IfNotPresent"
+          env:
+            - name: TZ
+              value: Europe/Madrid
           args:
           ports:
             - containerPort: 9091
@@ -1224,6 +1238,9 @@ spec:
         - name: prometheus-server-configmap-reload
           image: "jimmidyson/configmap-reload:v0.5.0"
           imagePullPolicy: "IfNotPresent"
+          env:
+            - name: TZ
+              value: Europe/Madrid
           args:
             - --volume-dir=/etc/config
             - --webhook-url=http://127.0.0.1:9090/-/reload
@@ -1237,6 +1254,9 @@ spec:
         - name: prometheus-server
           image: "prom/prometheus:v2.24.0"
           imagePullPolicy: "IfNotPresent"
+          env:
+            - name: TZ
+              value: Europe/Madrid
           args:
             - --storage.tsdb.retention.time=15d
             - --config.file=/etc/config/prometheus.yml
