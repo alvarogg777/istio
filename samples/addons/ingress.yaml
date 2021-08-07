@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: istio
 spec:
   rules:
-  - host: my-grafana.io
+  - host: grafana.alboroto.live
     http:
       paths:
       - path: /
@@ -15,7 +15,7 @@ spec:
         backend:
           serviceName: grafana
           servicePort: 3000
-  - host: my-tracing.io
+  - host: tracing.alboroto.live
     http:
       paths:
       - path: /
@@ -31,7 +31,7 @@ spec:
         backend:
           serviceName: prometheus
           servicePort: 9090
-  - host: my-kiali.io
+  - host: kiali.alboroto.live
     http:
       paths:
       - path: /
