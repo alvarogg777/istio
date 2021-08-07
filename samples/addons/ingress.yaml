@@ -39,4 +39,12 @@ spec:
         backend:
           serviceName: kiali
           servicePort: 20001
+  - host: auth.alboroto.live
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: authelia-service
+          servicePort: 80
 
