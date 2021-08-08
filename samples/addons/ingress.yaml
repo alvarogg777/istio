@@ -23,7 +23,7 @@ spec:
         backend:
           serviceName: zipkin
           servicePort: 9411
-  - host: my-prometheus.io
+  - host: prometheus.alboroto.live
     http:
       paths:
       - path: /
@@ -39,12 +39,12 @@ spec:
         backend:
           serviceName: kiali
           servicePort: 20001
-  - host: auth.alboroto.live
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          serviceName: authelia-service
-          servicePort: 80
+  # - host: auth.alboroto.live
+  #   http:
+  #     paths:
+  #     - path: /
+  #       pathType: Prefix
+  #       backend:
+  #         serviceName: authelia-service
+  #         servicePort: 80
 
