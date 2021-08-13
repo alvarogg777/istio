@@ -10,7 +10,7 @@ pilot:
   rollingMaxUnavailable: 25%
 
   hub: "docker.io/querycapistio"
-  tag: "v1.10.3"
+  tag: "v1.11.0"
 
   # Can be a full hub/image:tag
   image: pilot
@@ -237,7 +237,7 @@ global:
   # Dev builds from prow are on gcr.io
   hub: docker.io/querycapistio
   # Default tag for Istio images.
-  tag: 1.10.3
+  tag: 1.11.0
 
   # Specify image pull policy if default behavior isn't desired.
   # Default behavior: latest images will be Always else IfNotPresent.
