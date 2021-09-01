@@ -900,7 +900,7 @@ spec:
       serviceAccountName: prometheus-node-exporter
       containers:
         - name: prometheus-node-exporter
-          image: "quay.io/prometheus/node-exporter:v1.0.1"
+          image: "quay.io/prometheus/node-exporter:v1.2.2"
           env:
             - name: TZ
               value: Europe/Madrid
@@ -1036,7 +1036,7 @@ spec:
 
         - --telemetry-port=8081
         imagePullPolicy: IfNotPresent
-        image: "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v1.9.8"
+        image: "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.2.0"
         env:
           - name: TZ
             value: Europe/Madrid
@@ -1086,7 +1086,7 @@ spec:
       serviceAccountName: prometheus-alertmanager
       containers:
         - name: prometheus-alertmanager
-          image: "quay.io/prometheus/alertmanager:v0.21.0"
+          image: "quay.io/prometheus/alertmanager:v0.23.0"
           imagePullPolicy: "IfNotPresent"
           env:
             - name: TZ
@@ -1177,7 +1177,7 @@ spec:
       serviceAccountName: prometheus-pushgateway
       containers:
         - name: prometheus-pushgateway
-          image: "prom/pushgateway:v1.3.1"
+          image: "prom/pushgateway:v1.4.1"
           imagePullPolicy: "IfNotPresent"
           env:
             - name: TZ
@@ -1252,7 +1252,7 @@ spec:
               readOnly: true
 
         - name: prometheus-server
-          image: "prom/prometheus:v2.24.0"
+          image: "prom/prometheus:v2.29.0"
           imagePullPolicy: "IfNotPresent"
           env:
             - name: TZ
