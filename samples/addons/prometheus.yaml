@@ -980,59 +980,59 @@ spec:
       - name: kube-state-metrics
         args:
 
-        - --collectors=certificatesigningrequests
+        - --resources=certificatesigningrequests
 
-        - --collectors=configmaps
+        - --resources=configmaps
 
-        - --collectors=cronjobs
+        - --resources=cronjobs
 
-        - --collectors=daemonsets
+        - --resources=daemonsets
 
-        - --collectors=deployments
+        - --resources=deployments
 
-        - --collectors=endpoints
+        - --resources=endpoints
 
-        - --collectors=horizontalpodautoscalers
+        - --resources=horizontalpodautoscalers
 
-        - --collectors=ingresses
+        - --resources=ingresses
 
-        - --collectors=jobs
+        - --resources=jobs
 
-        - --collectors=limitranges
+        - --resources=limitranges
 
-        - --collectors=mutatingwebhookconfigurations
+        - --resources=mutatingwebhookconfigurations
 
-        - --collectors=namespaces
+        - --resources=namespaces
 
-        - --collectors=networkpolicies
+        - --resources=networkpolicies
 
-        - --collectors=nodes
+        - --resources=nodes
 
-        - --collectors=persistentvolumeclaims
+        - --resources=persistentvolumeclaims
 
-        - --collectors=persistentvolumes
+        - --resources=persistentvolumes
 
-        - --collectors=poddisruptionbudgets
+        - --resources=poddisruptionbudgets
 
-        - --collectors=pods
+        - --resources=pods
 
-        - --collectors=replicasets
+        - --resources=replicasets
 
-        - --collectors=replicationcontrollers
+        - --resources=replicationcontrollers
 
-        - --collectors=resourcequotas
+        - --resources=resourcequotas
 
-        - --collectors=secrets
+        - --resources=secrets
 
-        - --collectors=services
+        - --resources=services
 
-        - --collectors=statefulsets
+        - --resources=statefulsets
 
-        - --collectors=storageclasses
+        - --resources=storageclasses
 
-        - --collectors=validatingwebhookconfigurations
+        - --resources=validatingwebhookconfigurations
 
-        - --collectors=volumeattachments
+        - --resources=volumeattachments
 
         - --telemetry-port=8081
         imagePullPolicy: IfNotPresent
