@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- https://raw.githubusercontent.com/alvarogg777/docker-selenium/patch-4.0.0-beta-4-20210608/chart/manifests/selenium-grid.yaml
+- https://raw.githubusercontent.com/alvarogg777/docker-selenium/patch-4.0.0-rc-1-20210903/chart/manifests/selenium-grid.yaml
 - prometheus.yaml
 - grafana.yaml
 - jaeger.yaml
