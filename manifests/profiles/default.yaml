@@ -4,7 +4,7 @@ metadata:
   namespace: istio-system
 spec:
   hub: docker.io/querycapistio
-  tag: 1.11.0
+  tag: 1.11.2
 
   # You may override parts of meshconfig by uncommenting the following lines.
   meshConfig:

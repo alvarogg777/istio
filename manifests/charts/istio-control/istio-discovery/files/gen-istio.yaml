@@ -148,7 +148,7 @@ data:
         "sts": {
           "servicePort": 0
         },
-        "tag": "1.11.0",
+        "tag": "1.11.2",
         "tracer": {
           "datadog": {
             "address": "$(HOST_IP):8126"
@@ -987,7 +987,7 @@ spec:
         fsGroup: 1337
       containers:
         - name: discovery
-          image: "docker.io/querycapistio/pilot:1.11.0"
+          image: "docker.io/querycapistio/pilot:1.11.2"
           args:
           - "discovery"
           - --monitoringAddr=:15014
