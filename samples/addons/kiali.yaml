@@ -493,6 +493,8 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 30
         env:
+        - name: TZ
+          value: Europe/Madrid
         - name: ACTIVE_NAMESPACE
           valueFrom:
             fieldRef:
