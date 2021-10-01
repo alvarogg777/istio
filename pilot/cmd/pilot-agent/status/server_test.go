@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -32,6 +34,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/prometheus/pkg/textparse"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"istio.io/istio/pilot/cmd/pilot-agent/status/ready"
@@ -53,7 +56,9 @@ const (
 var liveServerStats = "cluster_manager.cds.update_success: 1\nlistener_manager.lds.update_success: 1\nserver.state: 0\nlistener_manager.workers_started: 1"
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/header" {
+	segments := strings.Split(r.URL.Path[1:], "/")
+	switch segments[0] {
+	case "header":
 		if r.Host != testHostValue {
 			log.Errorf("Missing expected host header, got %v", r.Host)
 			w.WriteHeader(http.StatusBadRequest)
@@ -62,11 +67,21 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Errorf("Missing expected Some-Header, got %v", r.Header)
 			w.WriteHeader(http.StatusBadRequest)
 		}
-	}
-	if r.URL.Path != "/hello/sunnyvale" && r.URL.Path != "/" {
+	case "redirect":
+		http.Redirect(w, r, "/", http.StatusMovedPermanently)
+	case "redirect-loop":
+		http.Redirect(w, r, "/redirect-loop", http.StatusMovedPermanently)
+	case "remote-redirect":
+		http.Redirect(w, r, "http://example.com/foo", http.StatusMovedPermanently)
+	case "", "hello/sunnyvale":
+		w.Write([]byte("welcome, it works"))
+	case "status":
+		code, _ := strconv.Atoi(segments[1])
+		w.Header().Set("Location", "/")
+		w.WriteHeader(code)
+	default:
 		return
 	}
-	w.Write([]byte("welcome, it works"))
 }
 
 func TestNewServer(t *testing.T) {
@@ -312,6 +327,119 @@ my_metric{app="bar"} 0
 	}
 }
 
+func TestStatsContentType(t *testing.T) {
+	appOpenMetrics := `# TYPE jvm info
+# HELP jvm VM version info
+jvm_info{runtime="OpenJDK Runtime Environment",vendor="AdoptOpenJDK",version="16.0.1+9"} 1.0
+# TYPE jmx_config_reload_success counter
+# HELP jmx_config_reload_success Number of times configuration have successfully been reloaded.
+jmx_config_reload_success_total 0.0
+jmx_config_reload_success_created 1.623984612719E9
+# EOF
+`
+	appText004 := `# HELP jvm_info VM version info
+# TYPE jvm_info gauge
+jvm_info{runtime="OpenJDK Runtime Environment",vendor="AdoptOpenJDK",version="16.0.1+9",} 1.0
+# HELP jmx_config_reload_failure_created Number of times configuration have failed to be reloaded.
+# TYPE jmx_config_reload_failure_created gauge
+jmx_config_reload_failure_created 1.624025983489E9
+`
+	envoy := `# TYPE my_metric counter
+my_metric{} 0
+
+# TYPE my_other_metric counter
+my_other_metric{} 0
+`
+	cases := []struct {
+		name             string
+		acceptHeader     string
+		expectParseError bool
+	}{
+		{
+			name:         "openmetrics accept header",
+			acceptHeader: `application/openmetrics-text; version=0.0.1,text/plain;version=0.0.4;q=0.5,*/*;q=0.1`,
+		},
+		{
+			name:         "plaintext accept header",
+			acceptHeader: string(expfmt.FmtText),
+		},
+		{
+			name:         "empty accept header",
+			acceptHeader: "",
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			envoy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if _, err := w.Write([]byte(envoy)); err != nil {
+					t.Fatalf("write failed: %v", err)
+				}
+			}))
+			defer envoy.Close()
+			app := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				format := expfmt.NegotiateIncludingOpenMetrics(r.Header)
+				var negotiatedMetrics string
+				if format == expfmt.FmtOpenMetrics {
+					negotiatedMetrics = appOpenMetrics
+					w.Header().Set("Content-Type", string(expfmt.FmtOpenMetrics))
+				} else {
+					negotiatedMetrics = appText004
+					w.Header().Set("Content-Type", string(expfmt.FmtText))
+				}
+				if _, err := w.Write([]byte(negotiatedMetrics)); err != nil {
+					t.Fatalf("write failed: %v", err)
+				}
+			}))
+			defer app.Close()
+			envoyPort, err := strconv.Atoi(strings.Split(envoy.URL, ":")[2])
+			if err != nil {
+				t.Fatal(err)
+			}
+			server := &Server{
+				prometheus: &PrometheusScrapeConfiguration{
+					Port: strings.Split(app.URL, ":")[2],
+				},
+				envoyStatsPort: envoyPort,
+			}
+			req := &http.Request{}
+			req.Header = make(http.Header)
+			req.Header.Add("Accept", tt.acceptHeader)
+			server.handleStats(rec, req)
+			if rec.Code != 200 {
+				t.Fatalf("handleStats() => %v; want 200", rec.Code)
+			}
+
+			var format expfmt.Format
+			mediaType, _, err := mime.ParseMediaType(rec.Header().Get("Content-Type"))
+			if err == nil && mediaType == "application/openmetrics-text" {
+				format = expfmt.FmtOpenMetrics
+			} else {
+				format = expfmt.FmtText
+			}
+
+			if format == expfmt.FmtOpenMetrics {
+				omParser := textparse.NewOpenMetricsParser(rec.Body.Bytes())
+				for {
+					_, err := omParser.Next()
+					if err == io.EOF {
+						break
+					}
+					if err != nil {
+						t.Fatalf("failed to parse openmetrics: %v", err)
+					}
+				}
+			} else {
+				textParser := expfmt.TextParser{}
+				_, err := textParser.TextToMetricFamilies(strings.NewReader(rec.Body.String()))
+				if err != nil {
+					t.Fatalf("failed to parse text metrics: %v", err)
+				}
+			}
+		})
+	}
+}
+
 func TestStatsError(t *testing.T) {
 	fail := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -380,11 +508,12 @@ func TestAppProbe(t *testing.T) {
 		},
 	}
 
-	testCases := []struct {
+	type test struct {
 		probePath  string
 		config     KubeAppProbers
 		statusCode int
-	}{
+	}
+	testCases := []test{
 		{
 			probePath:  "bad-path-should-be-404",
 			config:     simpleConfig,
@@ -440,48 +569,112 @@ func TestAppProbe(t *testing.T) {
 			},
 			statusCode: http.StatusOK,
 		},
+		{
+			probePath: "app-health/redirect/livez",
+			config: KubeAppProbers{
+				"/app-health/redirect/livez": &Prober{
+					HTTPGet: &apimirror.HTTPGetAction{
+						Path: "redirect",
+						Port: intstr.IntOrString{IntVal: int32(appPort)},
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			probePath: "app-health/redirect-loop/livez",
+			config: KubeAppProbers{
+				"/app-health/redirect-loop/livez": &Prober{
+					HTTPGet: &apimirror.HTTPGetAction{
+						Path: "redirect-loop",
+						Port: intstr.IntOrString{IntVal: int32(appPort)},
+					},
+				},
+			},
+			statusCode: http.StatusInternalServerError,
+		},
+		{
+			probePath: "app-health/remote-redirect/livez",
+			config: KubeAppProbers{
+				"/app-health/remote-redirect/livez": &Prober{
+					HTTPGet: &apimirror.HTTPGetAction{
+						Path: "remote-redirect",
+						Port: intstr.IntOrString{IntVal: int32(appPort)},
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+	}
+	testFn := func(t *testing.T, tc test) {
+		appProber, err := json.Marshal(tc.config)
+		if err != nil {
+			t.Fatalf("invalid app probers")
+		}
+		config := Options{
+			StatusPort:     0,
+			KubeAppProbers: string(appProber),
+		}
+		// Starts the pilot agent status server.
+		server, err := NewServer(config)
+		if err != nil {
+			t.Fatalf("failed to create status server %v", err)
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go server.Run(ctx)
+
+		var statusPort uint16
+		for statusPort == 0 {
+			server.mutex.RLock()
+			statusPort = server.statusPort
+			server.mutex.RUnlock()
+		}
+
+		client := http.Client{}
+		req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:%v/%s", statusPort, tc.probePath), nil)
+		if err != nil {
+			t.Fatalf("[%v] failed to create request", tc.probePath)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal("request failed: ", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != tc.statusCode {
+			t.Errorf("[%v] unexpected status code, want = %v, got = %v", tc.probePath, tc.statusCode, resp.StatusCode)
+		}
 	}
 	for _, tc := range testCases {
-		t.Run(tc.probePath, func(t *testing.T) {
-			appProber, err := json.Marshal(tc.config)
-			if err != nil {
-				t.Fatalf("invalid app probers")
-			}
-			config := Options{
-				StatusPort:     0,
-				KubeAppProbers: string(appProber),
-			}
-			// Starts the pilot agent status server.
-			server, err := NewServer(config)
-			if err != nil {
-				t.Fatalf("failed to create status server %v", err)
-			}
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			go server.Run(ctx)
-
-			var statusPort uint16
-			for statusPort == 0 {
-				server.mutex.RLock()
-				statusPort = server.statusPort
-				server.mutex.RUnlock()
-			}
-
-			client := http.Client{}
-			req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:%v/%s", statusPort, tc.probePath), nil)
-			if err != nil {
-				t.Fatalf("[%v] failed to create request", tc.probePath)
-			}
-			resp, err := client.Do(req)
-			if err != nil {
-				t.Fatal("request failed: ", err)
-			}
-			defer resp.Body.Close()
-			if resp.StatusCode != tc.statusCode {
-				t.Errorf("[%v] unexpected status code, want = %v, got = %v", tc.probePath, tc.statusCode, resp.StatusCode)
-			}
-		})
+		t.Run(tc.probePath, func(t *testing.T) { testFn(t, tc) })
 	}
+	// Next we check ever
+	t.Run("status codes", func(t *testing.T) {
+		for code := http.StatusOK; code <= http.StatusNetworkAuthenticationRequired; code++ {
+			if http.StatusText(code) == "" { // Not a valid HTTP code
+				continue
+			}
+			expect := code
+			if isRedirect(code) {
+				expect = 200
+			}
+			t.Run(fmt.Sprint(code), func(t *testing.T) {
+				testFn(t, test{
+					probePath: "app-health/code/livez",
+					config: KubeAppProbers{
+						"/app-health/code/livez": &Prober{
+							TimeoutSeconds: 1,
+							HTTPGet: &apimirror.HTTPGetAction{
+								Path: fmt.Sprintf("status/%d", code),
+								Port: intstr.IntOrString{IntVal: int32(appPort)},
+							},
+						},
+					},
+					statusCode: expect,
+				})
+			})
+		}
+	})
 }
 
 func TestHttpsAppProbe(t *testing.T) {

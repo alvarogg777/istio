@@ -44,7 +44,6 @@ import (
 	"istio.io/istio/istioctl/pkg/util/handlers"
 	istio_envoy_configdump "istio.io/istio/istioctl/pkg/writer/envoy/configdump"
 	"istio.io/istio/pilot/pkg/model"
-	pilot_v1alpha3 "istio.io/istio/pilot/pkg/networking/core/v1alpha3"
 	"istio.io/istio/pilot/pkg/networking/util"
 	authz_model "istio.io/istio/pilot/pkg/security/authz/model"
 	pilotcontroller "istio.io/istio/pilot/pkg/serviceregistry/kube/controller"
@@ -148,6 +147,7 @@ the configuration objects that affect that pod.`,
 			// Now look for ingress gateways
 			return printIngressInfo(writer, matchingServices, podsLabels, client, configClient, kubeClient)
 		},
+		ValidArgsFunction: validPodsNameArgs,
 	}
 
 	cmd.PersistentFlags().BoolVar(&ignoreUnmeshed, "ignoreUnmeshed", false,
@@ -161,12 +161,14 @@ func describe() *cobra.Command {
 		Use:     "describe",
 		Aliases: []string{"des"},
 		Short:   "Describe resource and related Istio configuration",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.HelpFunc()(cmd, args)
+		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				return fmt.Errorf("unknown resource type %q", args[0])
 			}
-
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.HelpFunc()(cmd, args)
 			return nil
 		},
 	}
@@ -174,26 +176,6 @@ func describe() *cobra.Command {
 	describeCmd.AddCommand(podDescribeCmd())
 	describeCmd.AddCommand(svcDescribeCmd())
 	return describeCmd
-}
-
-func validatePort(port v1.ServicePort, pod *v1.Pod) []string {
-	retval := []string{}
-
-	// Build list of ports exposed by pod
-	containerPorts := make(map[int]bool)
-	for _, container := range pod.Spec.Containers {
-		for _, port := range container.Ports {
-			containerPorts[int(port.ContainerPort)] = true
-		}
-	}
-
-	// Get port number used by the service port being validated
-	_, err := pilotcontroller.FindPort(pod, &port)
-	if err != nil {
-		retval = append(retval, err.Error())
-	}
-
-	return retval
 }
 
 func servicePortProtocol(name string) protocol.Instance {
@@ -512,10 +494,8 @@ func printService(writer io.Writer, svc v1.Service, pod *v1.Pod) {
 			}
 
 			fmt.Fprintf(writer, "   Port: %s %d/%s targets pod port %d\n", port.Name, port.Port, protocol, nport)
-		}
-		msgs := validatePort(port, pod)
-		for _, msg := range msgs {
-			fmt.Fprintf(writer, "   %s\n", msg)
+		} else {
+			fmt.Fprintf(writer, "   %s\n", err.Error())
 		}
 	}
 }
@@ -609,7 +589,7 @@ func getInboundHTTPConnectionManager(cd *configdump.Wrapper, port int32) (*http_
 		if err != nil {
 			return nil, err
 		}
-		if listenerTyped.Name == pilot_v1alpha3.VirtualInboundListenerName {
+		if listenerTyped.Name == model.VirtualInboundListenerName {
 			for _, filterChain := range listenerTyped.FilterChains {
 				for _, filter := range filterChain.Filters {
 					hcm := &http_conn.HttpConnectionManager{}
@@ -899,7 +879,7 @@ func printIngressInfo(writer io.Writer, matchingServices []v1.Service, podsLabel
 	if len(ingressSvcs.Items) == 0 {
 		return fmt.Errorf("no ingress gateway service")
 	}
-	byConfigDump, err := client.EnvoyDo(context.TODO(), pod.Name, pod.Namespace, "GET", "config_dump", nil)
+	byConfigDump, err := client.EnvoyDo(context.TODO(), pod.Name, pod.Namespace, "GET", "config_dump")
 	if err != nil {
 		return fmt.Errorf("failed to execute command on ingress gateway sidecar: %v", err)
 	}
@@ -1108,6 +1088,7 @@ the configuration objects that affect that service.`,
 			// Now look for ingress gateways
 			return printIngressInfo(writer, svcs, podsLabels, client, configClient, kubeClient)
 		},
+		ValidArgsFunction: validServiceArgs,
 	}
 
 	cmd.PersistentFlags().BoolVar(&ignoreUnmeshed, "ignoreUnmeshed", false,
@@ -1117,9 +1098,7 @@ the configuration objects that affect that service.`,
 }
 
 func describePodServices(writer io.Writer, kubeClient kube.ExtendedClient, configClient istioclient.Interface, pod *v1.Pod, matchingServices []v1.Service, podsLabels []k8s_labels.Set) error { // nolint: lll
-	var err error
-
-	byConfigDump, err := kubeClient.EnvoyDo(context.TODO(), pod.ObjectMeta.Name, pod.ObjectMeta.Namespace, "GET", "config_dump", nil)
+	byConfigDump, err := kubeClient.EnvoyDo(context.TODO(), pod.ObjectMeta.Name, pod.ObjectMeta.Namespace, "GET", "config_dump")
 	if err != nil {
 		if ignoreUnmeshed {
 			return nil

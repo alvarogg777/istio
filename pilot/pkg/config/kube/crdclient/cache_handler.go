@@ -15,8 +15,6 @@
 package crdclient
 
 import (
-	"reflect"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/informers"
 
@@ -38,7 +36,6 @@ import (
 type cacheHandler struct {
 	client   *Client
 	informer cache.SharedIndexInformer
-	handlers []func(config.Config, config.Config, model.Event)
 	schema   collection.Schema
 	lister   func(namespace string) cache.GenericNamespaceLister
 }
@@ -66,13 +63,14 @@ func (h *cacheHandler) onEvent(old interface{}, curr interface{}, event model.Ev
 	}
 
 	// TODO we may consider passing a pointer to handlers instead of the value. While spec is a pointer, the meta will be copied
-	for _, f := range h.handlers {
+	for _, f := range h.client.handlers[h.schema.Resource().GroupVersionKind()] {
 		f(oldConfig, currConfig, event)
 	}
 	return nil
 }
 
 func createCacheHandler(cl *Client, schema collection.Schema, i informers.GenericInformer) *cacheHandler {
+	scope.Debugf("registered CRD %v", schema.Resource().GroupVersionKind())
 	h := &cacheHandler{
 		client:   cl,
 		schema:   schema,
@@ -88,22 +86,27 @@ func createCacheHandler(cl *Client, schema collection.Schema, i informers.Generi
 	i.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			incrementEvent(kind, "add")
+			if !cl.beginSync.Load() {
+				return
+			}
 			cl.queue.Push(func() error {
 				return h.onEvent(nil, obj, model.EventAdd)
 			})
 		},
 		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				incrementEvent(kind, "update")
-				cl.queue.Push(func() error {
-					return h.onEvent(old, cur, model.EventUpdate)
-				})
-			} else {
-				incrementEvent(kind, "updatesame")
+			incrementEvent(kind, "update")
+			if !cl.beginSync.Load() {
+				return
 			}
+			cl.queue.Push(func() error {
+				return h.onEvent(old, cur, model.EventUpdate)
+			})
 		},
 		DeleteFunc: func(obj interface{}) {
 			incrementEvent(kind, "delete")
+			if !cl.beginSync.Load() {
+				return
+			}
 			cl.queue.Push(func() error {
 				return h.onEvent(nil, obj, model.EventDelete)
 			})

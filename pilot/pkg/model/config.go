@@ -15,7 +15,8 @@
 package model
 
 import (
-	"hash/crc32"
+	"crypto/md5"
+	"encoding/binary"
 	"net"
 	"sort"
 	"strings"
@@ -42,14 +43,20 @@ type ConfigKey struct {
 	Namespace string
 }
 
-func (key ConfigKey) HashCode() uint32 {
-	var result uint32
-	result = 31*result + crc32.ChecksumIEEE([]byte(key.Kind.Kind))
-	result = 31*result + crc32.ChecksumIEEE([]byte(key.Kind.Version))
-	result = 31*result + crc32.ChecksumIEEE([]byte(key.Kind.Group))
-	result = 31*result + crc32.ChecksumIEEE([]byte(key.Namespace))
-	result = 31*result + crc32.ChecksumIEEE([]byte(key.Name))
-	return result
+func (key ConfigKey) HashCode() uint64 {
+	hash := md5.New()
+	for _, v := range []string{
+		key.Name,
+		key.Namespace,
+		key.Kind.Kind,
+		key.Kind.Group,
+		key.Kind.Version,
+	} {
+		hash.Write([]byte(v))
+	}
+	var tmp [md5.Size]byte
+	sum := hash.Sum(tmp[:0])
+	return binary.BigEndian.Uint64(sum)
 }
 
 // ConfigsOfKind extracts configs of the specified kind.
@@ -142,6 +149,8 @@ type ConfigStore interface {
 	Delete(typ config.GroupVersionKind, name, namespace string, resourceVersion *string) error
 }
 
+type EventHandler = func(config.Config, config.Config, Event)
+
 // ConfigStoreCache is a local fully-replicated cache of the config store.  The
 // cache actively synchronizes its local state with the remote store and
 // provides a notification mechanism to receive update events. As such, the
@@ -160,7 +169,7 @@ type ConfigStoreCache interface {
 
 	// RegisterEventHandler adds a handler to receive config update events for a
 	// configuration type
-	RegisterEventHandler(kind config.GroupVersionKind, handler func(config.Config, config.Config, Event))
+	RegisterEventHandler(kind config.GroupVersionKind, handler EventHandler)
 
 	// Run until a signal is received
 	Run(stop <-chan struct{})

@@ -34,8 +34,8 @@ spec:
               value: "/badger/data"
             - name: BADGER_DIRECTORY_KEY
               value: "/badger/key"
-            - name: COLLECTOR_ZIPKIN_HTTP_PORT
-              value: "9411"
+            - name: COLLECTOR_ZIPKIN_HOST_PORT
+              value: ":9411"
             - name: MEMORY_MAX_TRACES
               value: "50000"
             - name: QUERY_BASE_PATH
@@ -72,7 +72,6 @@ spec:
       port: 80
       protocol: TCP
       targetPort: 16686
-
     # Note: Change port name if you add '--query.grpc.tls.enabled=true'
     - name: grpc-query
       port: 16685

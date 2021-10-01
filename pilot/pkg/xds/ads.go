@@ -34,6 +34,7 @@ import (
 	"istio.io/istio/pilot/pkg/model"
 	"istio.io/istio/pilot/pkg/networking/util"
 	v3 "istio.io/istio/pilot/pkg/xds/v3"
+	"istio.io/istio/pkg/cluster"
 	"istio.io/istio/pkg/config/schema/gvk"
 	"istio.io/istio/pkg/spiffe"
 	"istio.io/pkg/env"
@@ -47,7 +48,7 @@ var (
 	connectionNumber = int64(0)
 )
 
-// Used only when running in KNative, to handle the load banlancing behavior.
+// Used only when running in KNative, to handle the load balancing behavior.
 var firstRequest = uatomic.NewBool(true)
 
 var knativeEnv = env.RegisterStringVar("K_REVISION", "",
@@ -267,6 +268,11 @@ func (s *DiscoveryServer) Stream(stream DiscoveryStream) error {
 		peerAddr = peerInfo.Addr.String()
 	}
 
+	if err := s.WaitForRequestLimit(stream.Context()); err != nil {
+		log.Warnf("ADS: %q exceeded rate limit: %v", peerAddr, err)
+		return status.Errorf(codes.ResourceExhausted, "request rate limit exceeded: %v", err)
+	}
+
 	ids, err := s.authenticate(ctx)
 	if err != nil {
 		return status.Error(codes.Unauthenticated, err.Error())
@@ -342,7 +348,9 @@ func (s *DiscoveryServer) shouldRespond(con *Connection, request *discovery.Disc
 			s.StatusGen.OnNack(con.proxy, request)
 		}
 		con.proxy.Lock()
-		con.proxy.WatchedResources[request.TypeUrl].NonceNacked = request.ResponseNonce
+		if w, f := con.proxy.WatchedResources[request.TypeUrl]; f {
+			w.NonceNacked = request.ResponseNonce
+		}
 		con.proxy.Unlock()
 		return false
 	}
@@ -380,7 +388,7 @@ func (s *DiscoveryServer) shouldRespond(con *Connection, request *discovery.Disc
 		return true
 	}
 
-	// If there is mismatch in the npilot/pkg/bootstrap/server.goonce, that is a case of expired/stale nonce.
+	// If there is mismatch in the nonce, that is a case of expired/stale nonce.
 	// A nonce becomes stale following a newer nonce being sent to Envoy.
 	if request.ResponseNonce != previousInfo.NonceSent {
 		log.Debugf("ADS:%s: REQ %s Expired nonce received %s, sent %s", stype,
@@ -464,7 +472,7 @@ func listEqualUnordered(a []string, b []string) bool {
 	return true
 }
 
-// update the node associated with the connection, after receiving a a packet from envoy, also adds the connection
+// update the node associated with the connection, after receiving a packet from envoy, also adds the connection
 // to the tracking map.
 func (s *DiscoveryServer) initConnection(node *core.Node, con *Connection) error {
 	// Setup the initial proxy metadata
@@ -558,6 +566,7 @@ func (s *DiscoveryServer) initProxyMetadata(node *core.Node) (*model.Proxy, erro
 	}
 	// Update the config namespace associated with this proxy
 	proxy.ConfigNamespace = model.GetProxyConfigNamespace(proxy)
+	proxy.XdsNode = node
 	return proxy, nil
 }
 
@@ -570,8 +579,6 @@ func (s *DiscoveryServer) initializeProxy(node *core.Node, con *Connection) erro
 	if err := s.WorkloadEntryController.RegisterWorkload(proxy, con.Connect); err != nil {
 		return err
 	}
-
-	proxy.SetWorkloadLabels(s.Env)
 	s.computeProxyState(proxy, nil)
 
 	// Get the locality from the proxy's service instances.
@@ -601,7 +608,6 @@ func (s *DiscoveryServer) initializeProxy(node *core.Node, con *Connection) erro
 		proxy.XdsResourceGenerator = s.Generators[proxy.Metadata.Generator]
 	}
 
-	recordXDSClients(proxy.Metadata.IstioVersion, 1)
 	return nil
 }
 
@@ -618,7 +624,8 @@ func (s *DiscoveryServer) updateProxy(proxy *model.Proxy, request *model.PushReq
 }
 
 func (s *DiscoveryServer) computeProxyState(proxy *model.Proxy, request *model.PushRequest) {
-	proxy.SetServiceInstances(s.globalPushContext().ServiceDiscovery)
+	proxy.SetWorkloadLabels(s.Env)
+	proxy.SetServiceInstances(s.Env.ServiceDiscovery)
 	// Precompute the sidecar scope and merged gateways associated with this proxy.
 	// Saves compute cycles in networking code. Though this might be redundant sometimes, we still
 	// have to compute this because as part of a config change, a new Sidecar could become
@@ -678,7 +685,7 @@ func (s *DiscoveryServer) shouldProcessRequest(proxy *model.Proxy, req *discover
 // The delta protocol changes the request, adding unsubscribe/subscribe instead of sending full
 // list of resources. On the response it adds 'removed resources' and sends changes for everything.
 func (s *DiscoveryServer) DeltaAggregatedResources(stream discovery.AggregatedDiscoveryService_DeltaAggregatedResourcesServer) error {
-	if features.DeltaXds.Get() {
+	if features.DeltaXds {
 		return s.StreamDeltas(stream)
 	}
 	return status.Errorf(codes.Unimplemented, "not implemented")
@@ -801,7 +808,7 @@ func (s *DiscoveryServer) adsClientCount() int {
 	return len(s.adsClients)
 }
 
-func (s *DiscoveryServer) ProxyUpdate(clusterID, ip string) {
+func (s *DiscoveryServer) ProxyUpdate(clusterID cluster.ID, ip string) {
 	var connection *Connection
 
 	for _, v := range s.Clients() {
@@ -843,13 +850,6 @@ func AdsPushAll(s *DiscoveryServer) {
 // Primary code path is from v1 discoveryService.clearCache(), which is added as a handler
 // to the model ConfigStorageCache and Controller.
 func (s *DiscoveryServer) AdsPushAll(version string, req *model.PushRequest) {
-	// If we don't know what updated, cannot safely cache. Clear the whole cache
-	if len(req.ConfigsUpdated) == 0 {
-		s.Cache.ClearAll()
-	} else {
-		// Otherwise, just clear the updated configs
-		s.Cache.Clear(req.ConfigsUpdated)
-	}
 	if !req.Full {
 		log.Infof("XDS: Incremental Pushing:%s ConnectedEndpoints:%d Version:%s",
 			version, s.adsClientCount(), req.Push.PushVersion)
@@ -870,8 +870,7 @@ func (s *DiscoveryServer) AdsPushAll(version string, req *model.PushRequest) {
 
 // Send a signal to all connections, with a push event.
 func (s *DiscoveryServer) startPush(req *model.PushRequest) {
-	// Push config changes, iterating over connected envoys. This cover ADS and EDS(0.7), both share
-	// the same connection table
+	// Push config changes, iterating over connected envoys.
 	if log.DebugEnabled() {
 		currentlyPending := s.pushQueue.Pending()
 		if currentlyPending != 0 {
@@ -888,6 +887,7 @@ func (s *DiscoveryServer) addCon(conID string, con *Connection) {
 	s.adsClientsMutex.Lock()
 	defer s.adsClientsMutex.Unlock()
 	s.adsClients[conID] = con
+	recordXDSClients(con.proxy.Metadata.IstioVersion, 1)
 }
 
 func (s *DiscoveryServer) removeCon(conID string) {
@@ -916,8 +916,8 @@ func (conn *Connection) send(res *discovery.DiscoveryResponse) error {
 		for _, rc := range res.Resources {
 			sz += len(rc.Value)
 		}
-		conn.proxy.Lock()
-		if res.Nonce != "" {
+		if res.Nonce != "" && !strings.HasPrefix(res.TypeUrl, v3.DebugType) {
+			conn.proxy.Lock()
 			if conn.proxy.WatchedResources[res.TypeUrl] == nil {
 				conn.proxy.WatchedResources[res.TypeUrl] = &model.WatchedResource{TypeUrl: res.TypeUrl}
 			}
@@ -925,8 +925,8 @@ func (conn *Connection) send(res *discovery.DiscoveryResponse) error {
 			conn.proxy.WatchedResources[res.TypeUrl].VersionSent = res.VersionInfo
 			conn.proxy.WatchedResources[res.TypeUrl].LastSent = time.Now()
 			conn.proxy.WatchedResources[res.TypeUrl].LastSize = sz
+			conn.proxy.Unlock()
 		}
-		conn.proxy.Unlock()
 	} else if status.Convert(err).Code() == codes.DeadlineExceeded {
 		log.Infof("Timeout writing %s", conn.ConID)
 		xdsResponseWriteTimeouts.Increment()

@@ -60,3 +60,6 @@ var/
 # MacOS Desktop Services Store
 .DS_Store
 .envrc
+samples/addons/ingress-2.yaml
+tools/cluster
+tools/certs/root-*

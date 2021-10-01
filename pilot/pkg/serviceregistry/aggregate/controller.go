@@ -23,6 +23,8 @@ import (
 
 	"istio.io/istio/pilot/pkg/model"
 	"istio.io/istio/pilot/pkg/serviceregistry"
+	"istio.io/istio/pilot/pkg/serviceregistry/provider"
+	"istio.io/istio/pkg/cluster"
 	"istio.io/istio/pkg/config/host"
 	"istio.io/istio/pkg/config/labels"
 	"istio.io/istio/pkg/config/mesh"
@@ -67,7 +69,7 @@ func (c *Controller) AddRegistry(registry serviceregistry.Instance) {
 }
 
 // DeleteRegistry deletes specified registry from the aggregated controller
-func (c *Controller) DeleteRegistry(clusterID string, providerID serviceregistry.ProviderID) {
+func (c *Controller) DeleteRegistry(clusterID cluster.ID, providerID provider.ID) {
 	c.storeLock.Lock()
 	defer c.storeLock.Unlock()
 
@@ -97,9 +99,9 @@ func (c *Controller) GetRegistries() []serviceregistry.Instance {
 	return out
 }
 
-func (c *Controller) getRegistryIndex(clusterID string, provider serviceregistry.ProviderID) (int, bool) {
+func (c *Controller) getRegistryIndex(clusterID cluster.ID, provider provider.ID) (int, bool) {
 	for i, r := range c.registries {
-		if r.Cluster() == clusterID && r.Provider() == provider {
+		if r.Cluster().Equals(clusterID) && r.Provider() == provider {
 			return i, true
 		}
 	}
@@ -122,7 +124,7 @@ func (c *Controller) Services() ([]*model.Service, error) {
 			continue
 		}
 
-		if r.Provider() != serviceregistry.Kubernetes {
+		if r.Provider() != provider.Kubernetes {
 			services = append(services, svcs...)
 		} else {
 			for _, s := range svcs {
@@ -158,7 +160,7 @@ func (c *Controller) GetService(hostname host.Name) (*model.Service, error) {
 		if service == nil {
 			continue
 		}
-		if r.Provider() != serviceregistry.Kubernetes {
+		if r.Provider() != provider.Kubernetes {
 			return service, nil
 		}
 		if out == nil {
@@ -171,26 +173,20 @@ func (c *Controller) GetService(hostname host.Name) (*model.Service, error) {
 	return out, errs
 }
 
-func mergeService(dst, src *model.Service, srcCluster string) {
+func mergeService(dst, src *model.Service, srcCluster cluster.ID) {
 	dst.Mutex.Lock()
 	if dst.ClusterVIPs == nil {
-		dst.ClusterVIPs = make(map[string]string)
+		dst.ClusterVIPs = make(map[cluster.ID]string)
 	}
 	dst.ClusterVIPs[srcCluster] = src.Address
 	dst.Mutex.Unlock()
 }
 
 // NetworkGateways merges the service-based cross-network gateways from each registry.
-func (c *Controller) NetworkGateways() map[string][]*model.Gateway {
-	gws := map[string][]*model.Gateway{}
+func (c *Controller) NetworkGateways() []*model.NetworkGateway {
+	var gws []*model.NetworkGateway
 	for _, r := range c.GetRegistries() {
-		gwMap := r.NetworkGateways()
-		if gwMap == nil {
-			continue
-		}
-		for net, regGws := range gwMap {
-			gws[net] = append(gws[net], regGws...)
-		}
+		gws = append(gws, r.NetworkGateways()...)
 	}
 	return gws
 }
@@ -205,7 +201,7 @@ func (c *Controller) InstancesByPort(svc *model.Service, port int, labels labels
 	return instances
 }
 
-func nodeClusterID(node *model.Proxy) string {
+func nodeClusterID(node *model.Proxy) cluster.ID {
 	if node.Metadata == nil || node.Metadata.ClusterID == "" {
 		return ""
 	}
@@ -214,21 +210,21 @@ func nodeClusterID(node *model.Proxy) string {
 
 // Skip the service registry when there won't be a match
 // because the proxy is in a different cluster.
-func skipSearchingRegistryForProxy(nodeClusterID string, r serviceregistry.Instance) bool {
+func skipSearchingRegistryForProxy(nodeClusterID cluster.ID, r serviceregistry.Instance) bool {
 	// Always search non-kube (usually serviceentry) registry.
 	// Check every registry if cluster ID isn't specified.
-	if r.Provider() != serviceregistry.Kubernetes || nodeClusterID == "" {
+	if r.Provider() != provider.Kubernetes || nodeClusterID == "" {
 		return false
 	}
 
-	return r.Cluster() != nodeClusterID
+	return !r.Cluster().Equals(nodeClusterID)
 }
 
 // GetProxyServiceInstances lists service instances co-located with a given proxy
 func (c *Controller) GetProxyServiceInstances(node *model.Proxy) []*model.ServiceInstance {
 	out := make([]*model.ServiceInstance, 0)
+	nodeClusterID := nodeClusterID(node)
 	for _, r := range c.GetRegistries() {
-		nodeClusterID := nodeClusterID(node)
 		if skipSearchingRegistryForProxy(nodeClusterID, r) {
 			log.Debugf("GetProxyServiceInstances(): not searching registry %v: proxy %v CLUSTER_ID is %v",
 				r.Cluster(), node.ID, nodeClusterID)
@@ -246,12 +242,22 @@ func (c *Controller) GetProxyServiceInstances(node *model.Proxy) []*model.Servic
 
 func (c *Controller) GetProxyWorkloadLabels(proxy *model.Proxy) labels.Collection {
 	var out labels.Collection
-	// It doesn't make sense for a single proxy to be found in more than one registry.
-	// TODO: if otherwise, warning or else what to do about it.
+	clusterID := nodeClusterID(proxy)
 	for _, r := range c.GetRegistries() {
-		wlLabels := r.GetProxyWorkloadLabels(proxy)
-		if len(wlLabels) > 0 {
-			out = append(out, wlLabels...)
+		// If proxy clusterID unset, we may find incorrect workload label.
+		// This can not happen in k8s env.
+		if clusterID == "" {
+			wlLabels := r.GetProxyWorkloadLabels(proxy)
+			if len(wlLabels) > 0 {
+				out = append(out, wlLabels...)
+				break
+			}
+		} else if clusterID == r.Cluster() {
+			// find proxy in the specified cluster
+			wlLabels := r.GetProxyWorkloadLabels(proxy)
+			if len(wlLabels) > 0 {
+				out = append(out, wlLabels...)
+			}
 			break
 		}
 	}
@@ -279,6 +285,7 @@ func (c *Controller) Running() bool {
 func (c *Controller) HasSynced() bool {
 	for _, r := range c.GetRegistries() {
 		if !r.HasSynced() {
+			log.Debugf("registry %s is syncing", r.Cluster())
 			return false
 		}
 	}

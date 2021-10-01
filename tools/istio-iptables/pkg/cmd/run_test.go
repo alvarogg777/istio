@@ -79,6 +79,41 @@ func TestShortCircuitInternalIterface(t *testing.T) {
 	}
 }
 
+func TestExcludeIterface(t *testing.T) {
+	cfg := constructTestConfig()
+	cfg.ExcludeInterfaces = "not-istio-nic"
+	iptConfigurator := NewIptablesConfigurator(cfg, &dep.StdoutStubDependencies{})
+	iptConfigurator.run()
+	v4Rules := iptConfigurator.iptables.BuildV4()
+	v6Rules := iptConfigurator.iptables.BuildV6()
+	allRules := append(v4Rules, v6Rules...)
+	actual := FormatIptablesCommands(allRules)
+	expected := []string{
+		"iptables -t nat -N ISTIO_INBOUND",
+		"iptables -t nat -N ISTIO_REDIRECT",
+		"iptables -t nat -N ISTIO_IN_REDIRECT",
+		"iptables -t nat -N ISTIO_OUTPUT",
+		"iptables -t nat -A PREROUTING -i not-istio-nic -j RETURN",
+		"iptables -t nat -A OUTPUT -o not-istio-nic -j RETURN",
+		"iptables -t nat -A ISTIO_INBOUND -p tcp --dport 15008 -j RETURN",
+		"iptables -t nat -A ISTIO_REDIRECT -p tcp -j REDIRECT --to-ports 15001",
+		"iptables -t nat -A ISTIO_IN_REDIRECT -p tcp -j REDIRECT --to-ports 15006",
+		"iptables -t nat -A OUTPUT -p tcp -j ISTIO_OUTPUT",
+		"iptables -t nat -A ISTIO_OUTPUT -o lo -s 127.0.0.6/32 -j RETURN",
+		"iptables -t nat -A ISTIO_OUTPUT -o lo ! -d 127.0.0.1/32 -m owner --uid-owner 1337 -j ISTIO_IN_REDIRECT",
+		"iptables -t nat -A ISTIO_OUTPUT -o lo -m owner ! --uid-owner 1337 -j RETURN",
+		"iptables -t nat -A ISTIO_OUTPUT -m owner --uid-owner 1337 -j RETURN",
+		"iptables -t nat -A ISTIO_OUTPUT -o lo ! -d 127.0.0.1/32 -m owner --gid-owner 1337 -j ISTIO_IN_REDIRECT",
+		"iptables -t nat -A ISTIO_OUTPUT -o lo -m owner ! --gid-owner 1337 -j RETURN",
+		"iptables -t nat -A ISTIO_OUTPUT -m owner --gid-owner 1337 -j RETURN",
+		"iptables -t nat -A ISTIO_OUTPUT -d 127.0.0.1/32 -j RETURN",
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Output mismatch.\nExpected: %#v\nActual: %#v", expected, actual)
+	}
+}
+
 func TestHandleInboundIpv6RulesWithEmptyInboundPorts(t *testing.T) {
 	cfg := constructTestConfig()
 	cfg.InboundPortsInclude = ""
@@ -159,6 +194,16 @@ func TestRulesWithIpRange(t *testing.T) {
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -m owner --gid-owner 1 -j RETURN",
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -m owner --gid-owner 2 -j RETURN",
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -d 127.0.0.53/32 -j REDIRECT --to-port 15053",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --uid-owner 3 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --uid-owner 3 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --uid-owner 4 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --uid-owner 4 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --gid-owner 1 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --gid-owner 1 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --gid-owner 2 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --gid-owner 2 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -d 127.0.0.53/32 -j CT --zone 2",
+		"iptables -t raw -A PREROUTING -p udp --sport 53 -d 127.0.0.53/32 -j CT --zone 1",
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Output mismatch. Expected: \n%#v ; Actual: \n%#v", expected, actual)
@@ -214,6 +259,12 @@ func TestRulesWithTproxy(t *testing.T) {
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -m owner --uid-owner 1337 -j RETURN",
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -m owner --gid-owner 1337 -j RETURN",
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -d 127.0.0.53/32 -j REDIRECT --to-port 15053",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --uid-owner 1337 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --uid-owner 1337 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --gid-owner 1337 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --gid-owner 1337 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -d 127.0.0.53/32 -j CT --zone 2",
+		"iptables -t raw -A PREROUTING -p udp --sport 53 -d 127.0.0.53/32 -j CT --zone 1",
 		"iptables -t mangle -A PREROUTING -p tcp -m mark --mark 1337 -j CONNMARK --save-mark",
 		"iptables -t mangle -A OUTPUT -p tcp -o lo -m mark --mark 1337 -j RETURN",
 		"iptables -t mangle -A OUTPUT ! -d 127.0.0.1/32 -p tcp -o lo -m owner --uid-owner 1337 -j MARK --set-mark 1338",
@@ -403,6 +454,44 @@ func TestHandleInboundIpv6RulesWithUidGid(t *testing.T) {
 		"ip6tables -t nat -I PREROUTING 1 -i eth1 -d 10.0.0.0/8 -j ISTIO_REDIRECT",
 		"ip6tables -t nat -A ISTIO_OUTPUT -d 10.0.0.0/8 -j ISTIO_REDIRECT",
 		"ip6tables -t nat -A ISTIO_OUTPUT -j RETURN",
+	}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Output mismatch.\nExpected: %#v\nActual: %#v", expected, actual)
+	}
+}
+
+func TestHandleInboundIpv6RulesWithOutboundPorts(t *testing.T) {
+	cfg := constructTestConfig()
+	cfg.InboundPortsInclude = ""
+	cfg.OutboundPortsInclude = "32000,31000"
+	cfg.EnableInboundIPv6 = true
+
+	iptConfigurator := NewIptablesConfigurator(cfg, &dep.StdoutStubDependencies{})
+	ipv6Range := NetworkRange{
+		IsWildcard: false,
+		IPNets:     nil,
+	}
+	iptConfigurator.handleInboundIpv6Rules(ipv6Range, ipv6Range)
+	actual := FormatIptablesCommands(iptConfigurator.iptables.BuildV6())
+	expected := []string{
+		"ip6tables -t nat -N ISTIO_INBOUND",
+		"ip6tables -t nat -N ISTIO_REDIRECT",
+		"ip6tables -t nat -N ISTIO_IN_REDIRECT",
+		"ip6tables -t nat -N ISTIO_OUTPUT",
+		"ip6tables -t nat -A ISTIO_INBOUND -p tcp --dport 15008 -j RETURN",
+		"ip6tables -t nat -A ISTIO_REDIRECT -p tcp -j REDIRECT --to-ports 15001",
+		"ip6tables -t nat -A ISTIO_IN_REDIRECT -p tcp -j REDIRECT --to-ports 15006",
+		"ip6tables -t nat -A OUTPUT -p tcp -j ISTIO_OUTPUT",
+		"ip6tables -t nat -A ISTIO_OUTPUT -o lo -s ::6/128 -j RETURN",
+		"ip6tables -t nat -A ISTIO_OUTPUT -o lo ! -d ::1/128 -m owner --uid-owner 1337 -j ISTIO_IN_REDIRECT",
+		"ip6tables -t nat -A ISTIO_OUTPUT -o lo -m owner ! --uid-owner 1337 -j RETURN",
+		"ip6tables -t nat -A ISTIO_OUTPUT -m owner --uid-owner 1337 -j RETURN",
+		"ip6tables -t nat -A ISTIO_OUTPUT -o lo ! -d ::1/128 -m owner --gid-owner 1337 -j ISTIO_IN_REDIRECT",
+		"ip6tables -t nat -A ISTIO_OUTPUT -o lo -m owner ! --gid-owner 1337 -j RETURN",
+		"ip6tables -t nat -A ISTIO_OUTPUT -m owner --gid-owner 1337 -j RETURN",
+		"ip6tables -t nat -A ISTIO_OUTPUT -d ::1/128 -j RETURN",
+		"ip6tables -t nat -A ISTIO_OUTPUT -p tcp --dport 32000 -j ISTIO_REDIRECT",
+		"ip6tables -t nat -A ISTIO_OUTPUT -p tcp --dport 31000 -j ISTIO_REDIRECT",
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Output mismatch.\nExpected: %#v\nActual: %#v", expected, actual)
@@ -720,6 +809,16 @@ func TestHandleInboundIpv4RulesWithUidGid(t *testing.T) {
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -m owner --gid-owner 1 -j RETURN",
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -m owner --gid-owner 2 -j RETURN",
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -d 127.0.0.53/32 -j REDIRECT --to-port 15053",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --uid-owner 3 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --uid-owner 3 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --uid-owner 4 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --uid-owner 4 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --gid-owner 1 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --gid-owner 1 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --gid-owner 2 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --gid-owner 2 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -d 127.0.0.53/32 -j CT --zone 2",
+		"iptables -t raw -A PREROUTING -p udp --sport 53 -d 127.0.0.53/32 -j CT --zone 1",
 	}
 
 	if !reflect.DeepEqual(actual, expected) {
@@ -804,6 +903,16 @@ func TestRulesWithLoopbackIpInOutboundIpRanges(t *testing.T) {
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -m owner --gid-owner 1 -j RETURN",
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -m owner --gid-owner 2 -j RETURN",
 		"iptables -t nat -A OUTPUT -p udp --dport 53 -d 127.0.0.53/32 -j REDIRECT --to-port 15053",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --uid-owner 3 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --uid-owner 3 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --uid-owner 4 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --uid-owner 4 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --gid-owner 1 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --gid-owner 1 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -m owner --gid-owner 2 -j CT --zone 1",
+		"iptables -t raw -A OUTPUT -p udp --sport 15053 -m owner --gid-owner 2 -j CT --zone 2",
+		"iptables -t raw -A OUTPUT -p udp --dport 53 -d 127.0.0.53/32 -j CT --zone 2",
+		"iptables -t raw -A PREROUTING -p udp --sport 53 -d 127.0.0.53/32 -j CT --zone 1",
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Output mismatch. Expected: \n%#v ; Actual: \n%#v", expected, actual)

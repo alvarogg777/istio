@@ -19,9 +19,11 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -34,6 +36,8 @@ import (
 	"time"
 
 	ocprom "contrib.go.opencensus.io/exporter/prometheus"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/go-multierror"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
@@ -41,8 +45,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"istio.io/istio/pilot/cmd/pilot-agent/metrics"
+	"istio.io/istio/pilot/cmd/pilot-agent/status/grpcready"
 	"istio.io/istio/pilot/cmd/pilot-agent/status/ready"
 	"istio.io/istio/pilot/pkg/model"
+	dnsProto "istio.io/istio/pkg/dns/proto"
 	"istio.io/istio/pkg/kube/apimirror"
 	"istio.io/pkg/env"
 	"istio.io/pkg/log"
@@ -66,7 +72,7 @@ const (
 
 var (
 	UpstreamLocalAddressIPv4 = &net.TCPAddr{IP: net.ParseIP("127.0.0.6")}
-	UpstreamLocalAddressIPv6 = &net.TCPAddr{IP: net.ParseIP("[::6]")}
+	UpstreamLocalAddressIPv6 = &net.TCPAddr{IP: net.ParseIP("::6")}
 )
 
 var PrometheusScrapingConfig = env.RegisterStringVar("ISTIO_PROMETHEUS_ANNOTATIONS", "", "")
@@ -98,12 +104,17 @@ type Options struct {
 	// the prober.
 	PodIP string
 	// KubeAppProbers is a json with Kubernetes application prober config encoded.
-	KubeAppProbers string
-	NodeType       model.NodeType
-	StatusPort     uint16
-	AdminPort      uint16
-	IPv6           bool
-	Probes         []ready.Prober
+	KubeAppProbers      string
+	NodeType            model.NodeType
+	StatusPort          uint16
+	AdminPort           uint16
+	IPv6                bool
+	Probes              []ready.Prober
+	EnvoyPrometheusPort int
+	Context             context.Context
+	FetchDNS            func() *dnsProto.NameTable
+	NoEnvoy             bool
+	GRPCBootstrap       string
 }
 
 // Server provides an endpoint for handling status probes.
@@ -117,6 +128,7 @@ type Server struct {
 	statusPort            uint16
 	lastProbeSuccessful   bool
 	envoyStatsPort        int
+	fetchDNS              func() *dnsProto.NameTable
 }
 
 func init() {
@@ -141,16 +153,26 @@ func NewServer(config Options) (*Server, error) {
 		localhost = localHostIPv6
 	}
 	probes := make([]ready.Prober, 0)
-	probes = append(probes, &ready.Probe{
-		LocalHostAddr: localhost,
-		AdminPort:     config.AdminPort,
-	})
+	if !config.NoEnvoy {
+		probes = append(probes, &ready.Probe{
+			LocalHostAddr: localhost,
+			AdminPort:     config.AdminPort,
+			Context:       config.Context,
+			NoEnvoy:       config.NoEnvoy,
+		})
+	}
+
+	if config.GRPCBootstrap != "" {
+		probes = append(probes, grpcready.NewProbe(config.GRPCBootstrap))
+	}
+
 	probes = append(probes, config.Probes...)
 	s := &Server{
 		statusPort:            config.StatusPort,
 		ready:                 probes,
 		appProbersDestination: config.PodIP,
-		envoyStatsPort:        15090,
+		envoyStatsPort:        config.EnvoyPrometheusPort,
+		fetchDNS:              config.FetchDNS,
 	}
 	if LegacyLocalhostProbeDestination.Get() {
 		s.appProbersDestination = "localhost"
@@ -192,7 +214,7 @@ func NewServer(config Options) (*Server, error) {
 	// Validate the map key matching the regex pattern.
 	for path, prober := range s.appKubeProbers {
 		if !appProberPattern.Match([]byte(path)) {
-			return nil, fmt.Errorf(`invalid key, must be in form of regex pattern ^/app-health/[^\/]+/(livez|readyz)$`)
+			return nil, fmt.Errorf(`invalid key, must be in form of regex pattern %v`, appProberPattern)
 		}
 		if prober.HTTPGet == nil {
 			return nil, fmt.Errorf(`invalid prober type, must be of type httpGet`)
@@ -216,10 +238,34 @@ func NewServer(config Options) (*Server, error) {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 				DialContext:     d.DialContext,
 			},
+			CheckRedirect: redirectChecker(),
 		}
 	}
 
 	return s, nil
+}
+
+// Copies logic from https://github.com/kubernetes/kubernetes/blob/b152001f459/pkg/probe/http/http.go#L129-L130
+func isRedirect(code int) bool {
+	return code >= http.StatusMultipleChoices && code < http.StatusBadRequest
+}
+
+// Using the same redirect logic that kubelet does: https://github.com/kubernetes/kubernetes/blob/b152001f459/pkg/probe/http/http.go#L141
+// This means that:
+// * If we exceed 10 redirects, the probe fails
+// * If we redirect somewhere external, the probe succeeds (https://github.com/kubernetes/kubernetes/blob/b152001f459/pkg/probe/http/http.go#L130)
+// * If we redirect to the same address, the probe will follow the redirect
+func redirectChecker() func(*http.Request, []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		if req.URL.Hostname() != via[0].URL.Hostname() {
+			return http.ErrUseLastResponse
+		}
+		// Default behavior: stop after 10 redirects.
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+		return nil
+	}
 }
 
 // FormatProberURL returns a set of HTTP URLs that pilot agent will serve to take over Kubernetes
@@ -248,6 +294,7 @@ func (s *Server) Run(ctx context.Context) {
 	mux.HandleFunc("/debug/pprof/profile", s.handlePprofProfile)
 	mux.HandleFunc("/debug/pprof/symbol", s.handlePprofSymbol)
 	mux.HandleFunc("/debug/pprof/trace", s.handlePprofTrace)
+	mux.HandleFunc("/debug/ndsz", s.handleNdsz)
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", s.statusPort))
 	if err != nil {
@@ -377,6 +424,7 @@ type PrometheusScrapeConfiguration struct {
 // the application metrics and merge them together.
 // The merge here is a simple string concatenation. This works for almost all cases, assuming the application
 // is not exposing the same metrics as Envoy.
+// This merging works for both FmtText and FmtOpenMetrics and will use the format of the application metrics
 // Note that we do not return any errors here. If we do, we will drop metrics. For example, the app may be having issues,
 // but we still want Envoy metrics. Instead, errors are tracked in the failed scrape metrics/logs.
 func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
@@ -384,35 +432,59 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	var envoy, application, agent []byte
 	var err error
 	// Gather all the metrics we will merge
-	if envoy, err = s.scrape(fmt.Sprintf("http://localhost:%d/stats/prometheus", s.envoyStatsPort), r.Header); err != nil {
+	if envoy, _, err = s.scrape(fmt.Sprintf("http://localhost:%d/stats/prometheus", s.envoyStatsPort), r.Header); err != nil {
 		log.Errorf("failed scraping envoy metrics: %v", err)
 		metrics.EnvoyScrapeErrors.Increment()
 	}
+	// Process envoy's metrics to make them compatible with FmtOpenMetrics
+	envoy = processMetrics(envoy)
+
+	// Scrape app metrics if defined and capture their format
+	var format expfmt.Format
 	if s.prometheus != nil {
+		var contentType string
 		url := fmt.Sprintf("http://localhost:%s%s", s.prometheus.Port, s.prometheus.Path)
-		if application, err = s.scrape(url, r.Header); err != nil {
+		if application, contentType, err = s.scrape(url, r.Header); err != nil {
 			log.Errorf("failed scraping application metrics: %v", err)
 			metrics.AppScrapeErrors.Increment()
 		}
+		format = negotiateMetricsFormat(contentType)
 	}
+
 	if agent, err = scrapeAgentMetrics(); err != nil {
 		log.Errorf("failed scraping agent metrics: %v", err)
 		metrics.AgentScrapeErrors.Increment()
 	}
 
+	w.Header().Set("Content-Type", string(format))
+
 	// Write out the metrics
-	if _, err := w.Write(envoy); err != nil {
-		log.Errorf("failed to write envoy metrics: %v", err)
-		metrics.EnvoyScrapeErrors.Increment()
-	}
-	if _, err := w.Write(application); err != nil {
-		log.Errorf("failed to write application metrics: %v", err)
-		metrics.AppScrapeErrors.Increment()
-	}
 	if _, err := w.Write(agent); err != nil {
 		log.Errorf("failed to write agent metrics: %v", err)
 		metrics.AgentScrapeErrors.Increment()
 	}
+	if _, err := w.Write(envoy); err != nil {
+		log.Errorf("failed to write envoy metrics: %v", err)
+		metrics.EnvoyScrapeErrors.Increment()
+	}
+	// App metrics must go last because if they are FmtOpenMetrics,
+	// they will have a trailing "# EOF" which terminates the full exposition
+	if _, err := w.Write(application); err != nil {
+		log.Errorf("failed to write application metrics: %v", err)
+		metrics.AppScrapeErrors.Increment()
+	}
+}
+
+func negotiateMetricsFormat(contentType string) expfmt.Format {
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err == nil && mediaType == expfmt.OpenMetricsType {
+		return expfmt.FmtOpenMetrics
+	}
+	return expfmt.FmtText
+}
+
+func processMetrics(metrics []byte) []byte {
+	return bytes.ReplaceAll(metrics, []byte("\n\n"), []byte("\n"))
 }
 
 func scrapeAgentMetrics() ([]byte, error) {
@@ -452,8 +524,9 @@ func getHeaderTimeout(timeout string) (time.Duration, error) {
 
 // scrape will send a request to the provided url to scrape metrics from
 // This will attempt to mimic some of Prometheus functionality by passing some of the headers through
-// such as timeout and user agent
-func (s *Server) scrape(url string, header http.Header) ([]byte, error) {
+// such as accept, timeout, and user agent
+// Returns the scraped metrics as well as the response's "Content-Type" header to determine the metrics format
+func (s *Server) scrape(url string, header http.Header) ([]byte, string, error) {
 	ctx := context.Background()
 	if timeoutString := header.Get("X-Prometheus-Scrape-Timeout-Seconds"); timeoutString != "" {
 		timeout, err := getHeaderTimeout(timeoutString)
@@ -465,10 +538,9 @@ func (s *Server) scrape(url string, header http.Header) ([]byte, error) {
 			defer cancel()
 		}
 	}
-
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	applyHeaders(req.Header, header, "Accept",
 		"User-Agent",
@@ -477,18 +549,19 @@ func (s *Server) scrape(url string, header http.Header) ([]byte, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("error scraping %s: %v", url, err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error scraping %s, status code: %v", url, resp.StatusCode)
+		return nil, "", fmt.Errorf("error scraping %s: %v", url, err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", fmt.Errorf("error scraping %s, status code: %v", url, resp.StatusCode)
+	}
 	metrics, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading %s: %v", url, err)
+		return nil, "", fmt.Errorf("error reading %s: %v", url, err)
 	}
 
-	return metrics, nil
+	format := resp.Header.Get("Content-Type")
+	return metrics, format, nil
 }
 
 func (s *Server) handleQuit(w http.ResponseWriter, r *http.Request) {
@@ -519,8 +592,6 @@ func (s *Server) handleAppProbe(w http.ResponseWriter, req *http.Request) {
 		_, _ = w.Write([]byte(fmt.Sprintf("app prober config does not exists for %v", path)))
 		return
 	}
-	// get the http client must exist because
-	httpClient := s.appProbeClient[path]
 
 	proberPath := prober.HTTPGet.Path
 	if !strings.HasPrefix(proberPath, "/") {
@@ -562,6 +633,9 @@ func (s *Server) handleAppProbe(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	// get the http client must exist because
+	httpClient := s.appProbeClient[path]
+
 	// Send the request.
 	response, err := httpClient.Do(appReq)
 	if err != nil {
@@ -575,8 +649,45 @@ func (s *Server) handleAppProbe(w http.ResponseWriter, req *http.Request) {
 		_ = response.Body.Close()
 	}()
 
+	if isRedirect(response.StatusCode) { // Redirect
+		// In other cases, we return the original status code. For redirects, it is illegal to
+		// not have Location header, so we need to switch to just 200.
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	// We only write the status code to the response.
 	w.WriteHeader(response.StatusCode)
+}
+
+func (s *Server) handleNdsz(w http.ResponseWriter, r *http.Request) {
+	if !isRequestFromLocalhost(r) {
+		http.Error(w, "Only requests from localhost are allowed", http.StatusForbidden)
+		return
+	}
+	nametable := s.fetchDNS()
+	if nametable == nil {
+		// See https://golang.org/doc/faq#nil_error for why writeJSONProto cannot handle this
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{}`))
+		return
+	}
+	writeJSONProto(w, nametable)
+}
+
+// writeJSONProto writes a protobuf to a json payload, handling content type, marshaling, and errors
+func writeJSONProto(w http.ResponseWriter, obj proto.Message) {
+	w.Header().Set("Content-Type", "application/json")
+	buf := bytes.NewBuffer(nil)
+	err := (&jsonpb.Marshaler{Indent: "  "}).Marshal(buf, obj)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 // notifyExit sends SIGTERM to itself

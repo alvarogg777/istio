@@ -38,8 +38,6 @@ var (
 	// Provider for XDS auth, e.g., gcp. By default, it is empty, meaning no auth provider.
 	xdsAuthProvider = env.RegisterStringVar("XDS_AUTH_PROVIDER", "", "Provider for XDS auth")
 
-	pilotCertProvider = env.RegisterStringVar("PILOT_CERT_PROVIDER", "istiod",
-		"The provider of Pilot DNS certificate.").Get()
 	jwtPolicy = env.RegisterStringVar("JWT_POLICY", jwt.PolicyThirdParty,
 		"The JWT validation policy.")
 	// ProvCert is the environment controlling the use of pre-provisioned certs, for VMs.
@@ -68,6 +66,10 @@ var (
 
 	secretTTLEnv = env.RegisterDurationVar("SECRET_TTL", 24*time.Hour,
 		"The cert lifetime requested by istio agent").Get()
+
+	fileDebounceDuration = env.RegisterDurationVar("FILE_DEBOUNCE_DURATION", 100*time.Millisecond,
+		"The duration for which the file read operation is delayed once file update is detected").Get()
+
 	secretRotationGracePeriodRatioEnv = env.RegisterFloatVar("SECRET_GRACE_PERIOD_RATIO", 0.5,
 		"The grace period ratio for the cert rotation, by default 0.5.").Get()
 	pkcs8KeysEnv = env.RegisterBoolVar("PKCS8_KEY", false,
@@ -82,12 +84,32 @@ var (
 		"If set to true, envoy will proxy XDS calls via the agent instead of directly connecting to istiod. This option "+
 			"will be removed once the feature is stabilized.").Get()
 	proxyXDSDebugViaAgent = env.RegisterBoolVar("PROXY_XDS_DEBUG_VIA_AGENT", true,
-		"If set to true, the agent will listen on 15009 and offer pilot's XDS istio.io/debug debug API there.").Get()
-	// This is a copy of the env var in the init code.
-	dnsCaptureByAgent = env.RegisterBoolVar("ISTIO_META_DNS_CAPTURE", false,
-		"If set to true, enable the capture of outgoing DNS packets on port 53, redirecting to istio-agent on :15053").Get()
+		"If set to true, the agent will listen on 15004 and offer pilot's XDS istio.io/debug debug API there.").Get()
+	// DNSCaptureByAgent is a copy of the env var in the init code.
+	DNSCaptureByAgent = env.RegisterBoolVar("ISTIO_META_DNS_CAPTURE", false,
+		"If set to true, enable the capture of outgoing DNS packets on port 53, redirecting to istio-agent on :15053")
+
+	// DNSCaptureAddr is the address to listen.
+	DNSCaptureAddr = env.RegisterStringVar("DNS_PROXY_ADDR", "localhost:15053",
+		"Custom address for the DNS proxy. If it ends with :53 and running as root allows running without iptable DNS capture")
 
 	// Ability of istio-agent to retrieve proxyConfig via XDS for dynamic configuration updates
 	enableProxyConfigXdsEnv = env.RegisterBoolVar("PROXY_CONFIG_XDS_AGENT", false,
 		"If set to true, agent retrieves dynamic proxy-config updates via xds channel").Get()
+
+	// Ability of istio-agent to retrieve bootstrap via XDS
+	enableBootstrapXdsEnv = env.RegisterBoolVar("BOOTSTRAP_XDS_AGENT", false,
+		"If set to true, agent retrieves the bootstrap configuration prior to starting Envoy").Get()
+
+	envoyStatusPortEnv = env.RegisterIntVar("ENVOY_STATUS_PORT", 15021,
+		"Envoy health status port value").Get()
+	envoyPrometheusPortEnv = env.RegisterIntVar("ENVOY_PROMETHEUS_PORT", 15090,
+		"Envoy prometheus redirection port value").Get()
+
+	// Defined by https://github.com/grpc/proposal/blob/c5722a35e71f83f07535c6c7c890cf0c58ec90c0/A27-xds-global-load-balancing.md#xdsclient-and-bootstrap-file
+	grpcBootstrapEnv = env.RegisterStringVar("GRPC_XDS_BOOTSTRAP", "",
+		"Path where gRPC expects to read a bootstrap file. Agent will generate one if set.").Get()
+
+	disableEnvoyEnv = env.RegisterBoolVar("DISABLE_ENVOY", false,
+		"Disables all Envoy agent features.").Get()
 )

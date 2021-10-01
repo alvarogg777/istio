@@ -21,6 +21,7 @@ const (
 	MANGLE = "mangle"
 	NAT    = "nat"
 	FILTER = "filter"
+	RAW    = "raw"
 )
 
 // Built-in iptables chains
@@ -51,6 +52,7 @@ const (
 	REJECT   = "REJECT"
 	REDIRECT = "REDIRECT"
 	MARK     = "MARK"
+	CT       = "CT"
 )
 
 // iptables chains
@@ -70,6 +72,7 @@ const (
 	InboundTProxyRouteTable   = "istio-inbound-tproxy-route-table"
 	InboundPorts              = "istio-inbound-ports"
 	LocalExcludePorts         = "istio-local-exclude-ports"
+	ExcludeInterfaces         = "istio-exclude-interfaces"
 	ServiceCidr               = "istio-service-cidr"
 	ServiceExcludeCidr        = "istio-service-exclude-cidr"
 	OutboundPorts             = "istio-outbound-ports"
@@ -88,6 +91,10 @@ const (
 	IptablesProbePort         = "iptables-probe-port"
 	ProbeTimeout              = "probe-timeout"
 	RedirectDNS               = "redirect-dns"
+	CaptureAllDNS             = "capture-all-dns"
+	OutputPath                = "output-paths"
+	NetworkNamespace          = "network-namespace"
+	CNIMode                   = "cni-mode"
 )
 
 const (
@@ -109,6 +116,7 @@ const (
 	IP6TABLESRESTORE = "ip6tables-restore"
 	IP6TABLESSAVE    = "ip6tables-save"
 	IP               = "ip"
+	NSENTER          = "nsenter"
 )
 
 // Constants for syscall

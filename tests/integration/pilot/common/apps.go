@@ -19,8 +19,8 @@ import (
 	"strconv"
 	"strings"
 
-	"istio.io/istio/pkg/config/protocol"
 	"istio.io/istio/pkg/test/framework/components/echo"
+	"istio.io/istio/pkg/test/framework/components/echo/common"
 	"istio.io/istio/pkg/test/framework/components/echo/echoboot"
 	"istio.io/istio/pkg/test/framework/components/istio"
 	"istio.io/istio/pkg/test/framework/components/istio/ingress"
@@ -36,7 +36,8 @@ type EchoDeployments struct {
 	ExternalNamespace namespace.Instance
 
 	// Ingressgateway instance
-	Ingress ingress.Instance
+	Ingress   ingress.Instance
+	Ingresses ingress.Instances
 
 	// Standard echo app to be used by tests
 	PodA echo.Instances
@@ -50,6 +51,8 @@ type EchoDeployments struct {
 	Headless echo.Instances
 	// StatefulSet echo app to be used by tests
 	StatefulSet echo.Instances
+	// ProxylessGRPC echo app to be used by tests
+	ProxylessGRPC echo.Instances
 	// Echo app to be used by tests, with no sidecar injected
 	Naked echo.Instances
 	// A virtual machine echo app (only deployed to one cluster)
@@ -62,41 +65,22 @@ type EchoDeployments struct {
 }
 
 const (
-	PodASvc        = "a"
-	PodBSvc        = "b"
-	PodCSvc        = "c"
-	PodTproxySvc   = "tproxy"
-	VMSvc          = "vm"
-	HeadlessSvc    = "headless"
-	StatefulSetSvc = "statefulset"
-	NakedSvc       = "naked"
-	ExternalSvc    = "external"
+	PodASvc          = "a"
+	PodBSvc          = "b"
+	PodCSvc          = "c"
+	PodTproxySvc     = "tproxy"
+	VMSvc            = "vm"
+	HeadlessSvc      = "headless"
+	StatefulSetSvc   = "statefulset"
+	ProxylessGRPCSvc = "proxyless-grpc"
+	NakedSvc         = "naked"
+	ExternalSvc      = "external"
 
 	externalHostname = "fake.external.com"
 )
 
-var EchoPorts = []echo.Port{
-	{Name: "http", Protocol: protocol.HTTP, ServicePort: 80, InstancePort: 18080},
-	{Name: "grpc", Protocol: protocol.GRPC, ServicePort: 7070, InstancePort: 17070},
-	{Name: "tcp", Protocol: protocol.TCP, ServicePort: 9090, InstancePort: 19090},
-	{Name: "https", Protocol: protocol.HTTPS, ServicePort: 443, InstancePort: 18443, TLS: true},
-	{Name: "tcp-server", Protocol: protocol.TCP, ServicePort: 9091, InstancePort: 16060, ServerFirst: true},
-	{Name: "auto-tcp", Protocol: protocol.TCP, ServicePort: 9092, InstancePort: 19091},
-	{Name: "auto-tcp-server", Protocol: protocol.TCP, ServicePort: 9093, InstancePort: 16061, ServerFirst: true},
-	{Name: "auto-http", Protocol: protocol.HTTP, ServicePort: 81, InstancePort: 18081},
-	{Name: "auto-grpc", Protocol: protocol.GRPC, ServicePort: 7071, InstancePort: 17071},
-	{Name: "auto-https", Protocol: protocol.HTTPS, ServicePort: 9443, InstancePort: 19443, TLS: true},
-	{Name: "http-instance", Protocol: protocol.HTTP, ServicePort: 82, InstancePort: 18082, InstanceIP: true},
-	{Name: "http-localhost", Protocol: protocol.HTTP, ServicePort: 84, InstancePort: 18084, LocalhostIP: true},
-}
-
-var WorkloadPorts = []echo.WorkloadPort{
-	{Protocol: protocol.TCP, Port: 19092},
-	{Protocol: protocol.HTTP, Port: 18083},
-}
-
 func FindPortByName(name string) echo.Port {
-	for _, p := range EchoPorts {
+	for _, p := range common.EchoPorts {
 		if p.Name == name {
 			return p
 		}
@@ -106,9 +90,9 @@ func FindPortByName(name string) echo.Port {
 
 func serviceEntryPorts() []echo.Port {
 	res := []echo.Port{}
-	for _, p := range EchoPorts {
+	for _, p := range common.EchoPorts {
 		if strings.HasPrefix(p.Name, "auto") {
-			// The protocol needs to be set in EchoPorts to configure the echo deployment
+			// The protocol needs to be set in common.EchoPorts to configure the echo deployment
 			// But for service entry, we want to ensure we set it to "" which will use sniffing
 			p.Protocol = ""
 		}
@@ -135,10 +119,11 @@ func SetupApps(t resource.Context, i istio.Instance, apps *EchoDeployments) erro
 	}
 
 	apps.Ingress = i.IngressFor(t.Clusters().Default())
+	apps.Ingresses = i.Ingresses()
 
 	// Headless services don't work with targetPort, set to same port
-	headlessPorts := make([]echo.Port, len(EchoPorts))
-	for i, p := range EchoPorts {
+	headlessPorts := make([]echo.Port, len(common.EchoPorts))
+	for i, p := range common.EchoPorts {
 		p.ServicePort = p.InstancePort
 		headlessPorts[i] = p
 	}
@@ -147,24 +132,24 @@ func SetupApps(t resource.Context, i istio.Instance, apps *EchoDeployments) erro
 		WithConfig(echo.Config{
 			Service:           PodASvc,
 			Namespace:         apps.Namespace,
-			Ports:             EchoPorts,
+			Ports:             common.EchoPorts,
 			Subsets:           []echo.SubsetConfig{{}},
 			Locality:          "region.zone.subzone",
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		}).
 		WithConfig(echo.Config{
 			Service:           PodBSvc,
 			Namespace:         apps.Namespace,
-			Ports:             EchoPorts,
+			Ports:             common.EchoPorts,
 			Subsets:           []echo.SubsetConfig{{}},
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		}).
 		WithConfig(echo.Config{
 			Service:           PodCSvc,
 			Namespace:         apps.Namespace,
-			Ports:             EchoPorts,
+			Ports:             common.EchoPorts,
 			Subsets:           []echo.SubsetConfig{{}},
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		}).
 		WithConfig(echo.Config{
 			Service:           HeadlessSvc,
@@ -172,7 +157,7 @@ func SetupApps(t resource.Context, i istio.Instance, apps *EchoDeployments) erro
 			Namespace:         apps.Namespace,
 			Ports:             headlessPorts,
 			Subsets:           []echo.SubsetConfig{{}},
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		}).
 		WithConfig(echo.Config{
 			Service:           StatefulSetSvc,
@@ -181,12 +166,12 @@ func SetupApps(t resource.Context, i istio.Instance, apps *EchoDeployments) erro
 			Namespace:         apps.Namespace,
 			Ports:             headlessPorts,
 			Subsets:           []echo.SubsetConfig{{}},
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		}).
 		WithConfig(echo.Config{
 			Service:   NakedSvc,
 			Namespace: apps.Namespace,
-			Ports:     EchoPorts,
+			Ports:     common.EchoPorts,
 			Subsets: []echo.SubsetConfig{
 				{
 					Annotations: map[echo.Annotation]*echo.AnnotationValue{
@@ -196,13 +181,13 @@ func SetupApps(t resource.Context, i istio.Instance, apps *EchoDeployments) erro
 					},
 				},
 			},
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		}).
 		WithConfig(echo.Config{
 			Service:           ExternalSvc,
 			Namespace:         apps.ExternalNamespace,
 			DefaultHostHeader: externalHostname,
-			Ports:             EchoPorts,
+			Ports:             common.EchoPorts,
 			Subsets: []echo.SubsetConfig{
 				{
 					Annotations: map[echo.Annotation]*echo.AnnotationValue{
@@ -212,26 +197,46 @@ func SetupApps(t resource.Context, i istio.Instance, apps *EchoDeployments) erro
 					},
 				},
 			},
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		}).
 		WithConfig(echo.Config{
 			Service:   PodTproxySvc,
 			Namespace: apps.Namespace,
-			Ports:     EchoPorts,
+			Ports:     common.EchoPorts,
 			Subsets: []echo.SubsetConfig{{
 				Annotations: echo.NewAnnotations().Set(echo.SidecarInterceptionMode, "TPROXY"),
 			}},
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		}).
 		WithConfig(echo.Config{
 			Service:           VMSvc,
 			Namespace:         apps.Namespace,
-			Ports:             EchoPorts,
+			Ports:             common.EchoPorts,
 			DeployAsVM:        true,
 			AutoRegisterVM:    true,
 			Subsets:           []echo.SubsetConfig{{}},
-			WorkloadOnlyPorts: WorkloadPorts,
+			WorkloadOnlyPorts: common.WorkloadPorts,
 		})
+
+	if !t.Clusters().IsMulticluster() {
+		builder = builder.
+			// TODO when agent handles secure control-plane connection for grpc-less, deploy to "remote" clusters
+			WithConfig(echo.Config{
+				Service:   ProxylessGRPCSvc,
+				Namespace: apps.Namespace,
+				Ports:     common.EchoPorts,
+				Subsets: []echo.SubsetConfig{
+					{
+						Annotations: map[echo.Annotation]*echo.AnnotationValue{
+							echo.SidecarInjectTemplates: {
+								Value: "grpc-agent",
+							},
+						},
+					},
+				},
+				WorkloadOnlyPorts: common.WorkloadPorts,
+			})
+	}
 
 	echos, err := builder.Build()
 	if err != nil {
@@ -246,6 +251,7 @@ func SetupApps(t resource.Context, i istio.Instance, apps *EchoDeployments) erro
 	apps.StatefulSet = echos.Match(echo.Service(StatefulSetSvc))
 	apps.Naked = echos.Match(echo.Service(NakedSvc))
 	apps.External = echos.Match(echo.Service(ExternalSvc))
+	apps.ProxylessGRPC = echos.Match(echo.Service(ProxylessGRPCSvc))
 	if !t.Settings().SkipVM {
 		apps.VM = echos.Match(echo.Service(VMSvc))
 	}

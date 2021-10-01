@@ -118,6 +118,11 @@ message Resources {
   map<string, string> requests = 2;
 }
 
+// Mirrors ServiceAccount for unmarshaling.
+message ServiceAccount {
+  TypeMapStringInterface annotations = 1;
+}
+
 // DefaultPodDisruptionBudgetConfig specifies the default pod disruption budget configuration.
 //
 // See https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
@@ -236,7 +241,9 @@ message EgressGatewayConfig {
   // The injection template to use for the gateway. If not set, no injection will be performed.
   string injectionTemplate = 27;
 
-  // Next available 28.
+  ServiceAccount serviceAccount = 28;
+
+  // Next available 29.
 }
 
 // Configuration for gateways.
@@ -384,7 +391,7 @@ message GlobalConfig {
   IstiodConfig istiod = 54;
 
   // Configure the Pilot certificate provider.
-  // Currently, two providers are supported: "kubernetes" and "citadel".
+  // Currently, four providers are supported: "kubernetes", "istiod", "custom" and "none".
   string pilotCertProvider = 56;
 
   // Configure the policy for validating JWT.
@@ -405,8 +412,11 @@ message GlobalConfig {
 
   // Controls whether one external istiod is enabled.
   google.protobuf.BoolValue externalIstiod = 62;
+  
+  // Controls whether a remote cluster is the config cluster for an external istiod
+  google.protobuf.BoolValue configCluster = 64;
 
-  // The next available key is 64
+  // The next available key is 65
 }
 
 // Configuration for Security Token Service (STS) server.
@@ -523,7 +533,9 @@ message IngressGatewayConfig {
   // The injection template to use for the gateway. If not set, no injection will be performed.
   string injectionTemplate = 46;
 
-  // Next available 47.
+  ServiceAccount serviceAccount = 47;
+
+  // Next available 48.
 }
 
 // IngressGatewayZvpnConfig enables cross-cluster access using SNI matching.
@@ -899,6 +911,7 @@ enum tracer {
   datadog = 2;
   stackdriver = 3;
   openCensusAgent = 4;
+  none = 5;
 }
 
 // Configuration for proxy_init container which sets the pods' networking to intercept the inbound/outbound traffic.
@@ -1004,7 +1017,7 @@ message SidecarInjectorConfig {
   // If enabled, the legacy webhook selection logic will be used. This relies on filtering of webhook
   // requests in Istiod, rather than at the webhook selection level.
   // This is option is intended for migration purposes only and will be removed in Istio 1.10.
-  google.protobuf.BoolValue useLegacySelectors = 4;
+  google.protobuf.BoolValue useLegacySelectors = 4 [deprecated=true];
 }
 
 // Configuration for each of the supported tracers.
@@ -1075,6 +1088,8 @@ message BaseConfig {
 message IstiodRemoteConfig {
   // URL to use for sidecar injector webhook.
   string injectionURL = 1;
+  // Path to use for the sidecar injector webhook service.
+  string injectionPath = 2;
 }
 
 message Values {

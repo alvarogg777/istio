@@ -15,16 +15,16 @@
 package controller
 
 import (
-	"net"
-
 	v1 "k8s.io/api/core/v1"
 
 	"istio.io/api/label"
 	"istio.io/istio/pilot/pkg/model"
 	"istio.io/istio/pilot/pkg/networking/util"
 	"istio.io/istio/pilot/pkg/serviceregistry/kube"
+	labelutil "istio.io/istio/pilot/pkg/serviceregistry/util/label"
 	"istio.io/istio/pkg/config/labels"
 	kubeUtil "istio.io/istio/pkg/kube"
+	"istio.io/istio/pkg/network"
 )
 
 // A stateful IstioEndpoint builder with metadata used to build IstioEndpoint
@@ -32,7 +32,7 @@ type EndpointBuilder struct {
 	controller controllerInterface
 
 	labels         labels.Instance
-	metaNetwork    string
+	metaNetwork    network.ID
 	serviceAccount string
 	locality       model.Locality
 	tlsMode        string
@@ -47,7 +47,7 @@ type EndpointBuilder struct {
 }
 
 func NewEndpointBuilder(c controllerInterface, pod *v1.Pod) *EndpointBuilder {
-	locality, sa, namespace, hostname, subdomain := "", "", "", "", ""
+	locality, sa, namespace, hostname, subdomain, ip := "", "", "", "", "", ""
 	var podLabels labels.Instance
 	if pod != nil {
 		locality = c.getPodLocality(pod)
@@ -61,12 +61,11 @@ func NewEndpointBuilder(c controllerInterface, pod *v1.Pod) *EndpointBuilder {
 				hostname = pod.Name
 			}
 		}
+		ip = pod.Status.PodIP
 	}
 	dm, _ := kubeUtil.GetDeployMetaFromPod(pod)
-
-	return &EndpointBuilder{
+	out := &EndpointBuilder{
 		controller:     c,
-		labels:         augmentLabels(podLabels, c.Cluster(), locality),
 		serviceAccount: sa,
 		locality: model.Locality{
 			Label:     locality,
@@ -78,14 +77,16 @@ func NewEndpointBuilder(c controllerInterface, pod *v1.Pod) *EndpointBuilder {
 		hostname:     hostname,
 		subDomain:    subdomain,
 	}
+	networkID := out.endpointNetwork(ip)
+	out.labels = labelutil.AugmentLabels(podLabels, c.Cluster(), locality, networkID)
+	return out
 }
 
 func NewEndpointBuilderFromMetadata(c controllerInterface, proxy *model.Proxy) *EndpointBuilder {
 	locality := util.LocalityToString(proxy.Locality)
-	return &EndpointBuilder{
+	out := &EndpointBuilder{
 		controller:     c,
 		metaNetwork:    proxy.Metadata.Network,
-		labels:         augmentLabels(proxy.Metadata.Labels, c.Cluster(), locality),
 		serviceAccount: proxy.Metadata.ServiceAccount,
 		locality: model.Locality{
 			Label:     locality,
@@ -93,85 +94,53 @@ func NewEndpointBuilderFromMetadata(c controllerInterface, proxy *model.Proxy) *
 		},
 		tlsMode: model.GetTLSModeFromEndpointLabels(proxy.Metadata.Labels),
 	}
-}
-
-// augmentLabels adds additional labels to the those provided.
-func augmentLabels(in labels.Instance, clusterID, locality string) labels.Instance {
-	// Copy the original labels to a new map.
-	out := make(labels.Instance)
-	for k, v := range in {
-		out[k] = v
+	var networkID network.ID
+	if len(proxy.IPAddresses) > 0 {
+		networkID = out.endpointNetwork(proxy.IPAddresses[0])
 	}
-
-	// Don't need to add label.TopologyNetwork.Name, since that's already added by injection.
-	region, zone, subzone := model.SplitLocalityLabel(locality)
-	if len(region) > 0 {
-		out[NodeRegionLabelGA] = region
-	}
-	if len(zone) > 0 {
-		out[NodeZoneLabelGA] = zone
-	}
-	if len(subzone) > 0 {
-		out[label.TopologySubzone.Name] = subzone
-	}
-	if len(clusterID) > 0 {
-		out[label.TopologyCluster.Name] = clusterID
-	}
+	out.labels = labelutil.AugmentLabels(proxy.Metadata.Labels, c.Cluster(), locality, networkID)
 	return out
 }
 
 func (b *EndpointBuilder) buildIstioEndpoint(
 	endpointAddress string,
 	endpointPort int32,
-	svcPortName string) *model.IstioEndpoint {
+	svcPortName string,
+	discoverabilityPolicy model.EndpointDiscoverabilityPolicy) *model.IstioEndpoint {
 	if b == nil {
 		return nil
 	}
 
+	// in case pod is not found when init EndpointBuilder.
+	networkID := network.ID(b.labels[label.TopologyNetwork.Name])
+	if networkID == "" {
+		networkID = b.endpointNetwork(endpointAddress)
+		b.labels[label.TopologyNetwork.Name] = string(networkID)
+	}
+
 	return &model.IstioEndpoint{
-		Labels:          b.labels,
-		ServiceAccount:  b.serviceAccount,
-		Locality:        b.locality,
-		TLSMode:         b.tlsMode,
-		Address:         endpointAddress,
-		EndpointPort:    uint32(endpointPort),
-		ServicePortName: svcPortName,
-		Network:         b.endpointNetwork(endpointAddress),
-		WorkloadName:    b.workloadName,
-		Namespace:       b.namespace,
-		HostName:        b.hostname,
-		SubDomain:       b.subDomain,
+		Labels:                b.labels,
+		ServiceAccount:        b.serviceAccount,
+		Locality:              b.locality,
+		TLSMode:               b.tlsMode,
+		Address:               endpointAddress,
+		EndpointPort:          uint32(endpointPort),
+		ServicePortName:       svcPortName,
+		Network:               networkID,
+		WorkloadName:          b.workloadName,
+		Namespace:             b.namespace,
+		HostName:              b.hostname,
+		SubDomain:             b.subDomain,
+		DiscoverabilityPolicy: discoverabilityPolicy,
 	}
 }
 
 // return the mesh network for the endpoint IP. Empty string if not found.
-func (b *EndpointBuilder) endpointNetwork(endpointIP string) string {
-	// Try to determine the network by checking whether the endpoint IP belongs
-	// to any of the configure networks' CIDR ranges
-	if b.controller.cidrRanger() != nil {
-		entries, err := b.controller.cidrRanger().ContainingNetworks(net.ParseIP(endpointIP))
-		if err != nil {
-			log.Error(err)
-			return ""
-		}
-		if len(entries) > 1 {
-			log.Warnf("Found multiple networks CIDRs matching the endpoint IP: %s. Using the first match.", endpointIP)
-		}
-		if len(entries) > 0 {
-			return (entries[0].(namedRangerEntry)).name
-		}
-	}
-
-	// If not using cidr-lookup, or non of the given ranges contain the address, use the pod-label
-	if nw := b.labels[label.TopologyNetwork.Name]; nw != "" {
-		return nw
-	}
-
+func (b *EndpointBuilder) endpointNetwork(endpointIP string) network.ID {
 	// If we're building the endpoint based on proxy meta, prefer the injected ISTIO_META_NETWORK value.
 	if b.metaNetwork != "" {
 		return b.metaNetwork
 	}
 
-	// Fallback to legacy fromRegistry setting, all endpoints from this cluster are on that network.
-	return b.controller.defaultNetwork()
+	return b.controller.Network(endpointIP, b.labels)
 }

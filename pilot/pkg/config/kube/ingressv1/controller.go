@@ -42,6 +42,7 @@ import (
 	"istio.io/istio/pkg/kube"
 	"istio.io/istio/pkg/queue"
 	"istio.io/pkg/env"
+	"istio.io/pkg/log"
 )
 
 // In 1.0, the Gateway is defined in the namespace where the actual controller runs, and needs to be managed by
@@ -79,8 +80,8 @@ type controller struct {
 	domainSuffix string
 
 	queue                  queue.Instance
-	virtualServiceHandlers []func(config.Config, config.Config, model.Event)
-	gatewayHandlers        []func(config.Config, config.Config, model.Event)
+	virtualServiceHandlers []model.EventHandler
+	gatewayHandlers        []model.EventHandler
 
 	ingressInformer cache.SharedInformer
 	serviceInformer cache.SharedInformer
@@ -229,7 +230,7 @@ func (c *controller) onEvent(oldObj, curObj interface{}, event model.Event) erro
 	return nil
 }
 
-func (c *controller) RegisterEventHandler(kind config.GroupVersionKind, f func(config.Config, config.Config, model.Event)) {
+func (c *controller) RegisterEventHandler(kind config.GroupVersionKind, f model.EventHandler) {
 	switch kind {
 	case gvk.VirtualService:
 		c.virtualServiceHandlers = append(c.virtualServiceHandlers, f)
@@ -255,10 +256,11 @@ func (c *controller) HasSynced() bool {
 }
 
 func (c *controller) Run(stop <-chan struct{}) {
-	go func() {
-		cache.WaitForCacheSync(stop, c.HasSynced)
-		c.queue.Run(stop)
-	}()
+	if !cache.WaitForCacheSync(stop, c.HasSynced) {
+		log.Error("Failed to sync controller cache")
+		return
+	}
+	c.queue.Run(stop)
 	<-stop
 }
 

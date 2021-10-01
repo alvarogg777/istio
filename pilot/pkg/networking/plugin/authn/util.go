@@ -20,8 +20,8 @@ import (
 	"istio.io/istio/pilot/pkg/util/sets"
 )
 
-func trustDomainsForValidation(meshConfig *meshconfig.MeshConfig) []string {
-	if features.SkipValidateTrustDomain.Get() {
+func TrustDomainsForValidation(meshConfig *meshconfig.MeshConfig) []string {
+	if features.SkipValidateTrustDomain {
 		return nil
 	}
 

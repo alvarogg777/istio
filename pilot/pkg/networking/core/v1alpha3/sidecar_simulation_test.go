@@ -35,6 +35,7 @@ import (
 	"istio.io/istio/pilot/pkg/simulation"
 	"istio.io/istio/pilot/pkg/xds"
 	"istio.io/istio/pilot/test/xdstest"
+	cluster2 "istio.io/istio/pkg/cluster"
 	"istio.io/istio/pkg/config"
 	"istio.io/istio/pkg/config/host"
 	"istio.io/istio/pkg/config/mesh"
@@ -78,7 +79,7 @@ func TestInboundClusters(t *testing.T) {
 	service := &model.Service{
 		Hostname:    host.Name("backend.default.svc.cluster.local"),
 		Address:     "1.1.1.1",
-		ClusterVIPs: make(map[string]string),
+		ClusterVIPs: make(map[cluster2.ID]string),
 		Ports: model.PortList{&model.Port{
 			Name:     "default",
 			Port:     80,
@@ -93,7 +94,7 @@ func TestInboundClusters(t *testing.T) {
 	serviceAlt := &model.Service{
 		Hostname:    host.Name("backend-alt.default.svc.cluster.local"),
 		Address:     "1.1.1.2",
-		ClusterVIPs: make(map[string]string),
+		ClusterVIPs: make(map[cluster2.ID]string),
 		Ports: model.PortList{&model.Port{
 			Name:     "default",
 			Port:     80,
@@ -1304,6 +1305,169 @@ func TestLoop(t *testing.T) {
 				Result: simulation.Result{
 					// This request should be blocked
 					ClusterMatched: "BlackHoleCluster",
+				},
+			},
+		},
+	})
+}
+
+// Regression test for https://github.com/istio/istio/issues/35127
+func TestVirtualServiceNameConflict(t *testing.T) {
+	svc := `
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: alpha
+spec:
+  clusterIP: "1.2.3.2"
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: beta
+spec:
+  clusterIP: "1.2.3.3"
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example
+  namespace: example
+spec:
+  clusterIP: "1.2.3.4"
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: example
+---
+`
+	vs := `---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: api
+  namespace: alpha
+spec:
+  gateways:
+  - mesh
+  hosts:
+  - api.alpha.svc.cluster.local
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: example.example.svc.cluster.local
+        port:
+          number: 8080
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: api
+  namespace: beta
+spec:
+  gateways:
+  - mesh
+  hosts:
+  - api.beta.svc.cluster.local
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: example.example.svc.cluster.local
+        port:
+          number: 8080
+---
+`
+	sidecar := `
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: debug
+  namespace: debug
+spec:
+  egress:
+    - hosts:
+      - "./*"
+      - "alpha/*"
+      - "beta/*"
+      - "example/*"
+---
+`
+	runSimulationTest(t, &model.Proxy{ConfigNamespace: "debug"}, xds.FakeOptions{}, simulationTest{
+		config:     vs + sidecar,
+		kubeConfig: svc,
+		calls: []simulation.Expect{
+			{
+				Name: "with sidecar alpha",
+				Call: simulation.Call{
+					HostHeader: "api.alpha.svc.cluster.local",
+					Protocol:   simulation.HTTP,
+					Port:       8080,
+				},
+				Result: simulation.Result{
+					ClusterMatched: "outbound|8080||example.example.svc.cluster.local",
+				},
+			},
+			{
+				Name: "with sidecar beta",
+				Call: simulation.Call{
+					HostHeader: "api.beta.svc.cluster.local",
+					Protocol:   simulation.HTTP,
+					Port:       8080,
+				},
+				Result: simulation.Result{
+					ClusterMatched: "outbound|8080||example.example.svc.cluster.local",
+				},
+			},
+		},
+	})
+	runSimulationTest(t, &model.Proxy{ConfigNamespace: "debug"}, xds.FakeOptions{}, simulationTest{
+		config:     vs,
+		kubeConfig: svc,
+		calls: []simulation.Expect{
+			{
+				Name: "without sidecar alpha",
+				Call: simulation.Call{
+					HostHeader: "api.alpha.svc.cluster.local",
+					Protocol:   simulation.HTTP,
+					Port:       8080,
+				},
+				Result: simulation.Result{
+					ClusterMatched: "outbound|8080||example.example.svc.cluster.local",
+				},
+			},
+			{
+				Name: "without sidecar beta",
+				Call: simulation.Call{
+					HostHeader: "api.beta.svc.cluster.local",
+					Protocol:   simulation.HTTP,
+					Port:       8080,
+				},
+				Result: simulation.Result{
+					ClusterMatched: "outbound|8080||example.example.svc.cluster.local",
 				},
 			},
 		},

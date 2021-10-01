@@ -462,7 +462,7 @@ func TestInjectRequired(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if got := injectRequired(ignoredNamespaces, c.config, c.podSpec, c.meta); got != c.want {
+		if got := injectRequired(IgnoredNamespaces, c.config, c.podSpec, c.meta); got != c.want {
 			t.Errorf("injectRequired(%v, %v) got %v want %v", c.config, c.meta, got, c.want)
 		}
 	}
@@ -864,7 +864,7 @@ func TestRunAndServe(t *testing.T) {
         "prometheus.io/path": "/stats/prometheus",
         "prometheus.io/port": "15020",
         "prometheus.io/scrape": "true",
-        "sidecar.istio.io/status": "{\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\"],\"imagePullSecrets\":[\"istio-image-pull-secrets\"]}"
+        "sidecar.istio.io/status": "{\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\"],\"imagePullSecrets\":[\"istio-image-pull-secrets\"],\"revision\":\"default\"}"
     }
 },
 {
@@ -1045,11 +1045,12 @@ func BenchmarkInjectServe(b *testing.B) {
 	wh.Run(stop)
 
 	body := makeTestData(b, false, "v1beta1")
-	req := httptest.NewRequest("POST", "http://sidecar-injector/inject", bytes.NewReader(body))
-	req.Header.Add("Content-Type", "application/json")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("POST", "http://sidecar-injector/inject", bytes.NewReader(body))
+		req.Header.Add("Content-Type", "application/json")
+
 		wh.serveInject(httptest.NewRecorder(), req)
 	}
 }

@@ -178,6 +178,11 @@ func TestLabelsEquals(t *testing.T) {
 		want bool
 	}{
 		{
+			a:    nil,
+			b:    nil,
+			want: true,
+		},
+		{
 			a: nil,
 			b: labels.Instance{"a": "b"},
 		},
@@ -190,6 +195,19 @@ func TestLabelsEquals(t *testing.T) {
 			b:    labels.Instance{"a": "b"},
 			want: true,
 		},
+		{
+			a: labels.Instance{"a": "b"},
+			b: labels.Instance{"a": "b", "c": "d"},
+		},
+		{
+			b: labels.Instance{"a": "b", "c": "d"},
+			a: labels.Instance{"a": "b"},
+		},
+		{
+			b:    labels.Instance{"a": "b", "c": "d"},
+			a:    labels.Instance{"a": "b", "c": "d"},
+			want: true,
+		},
 	}
 	for _, c := range cases {
 		if got := c.a.Equals(c.b); got != c.want {
@@ -200,7 +218,7 @@ func TestLabelsEquals(t *testing.T) {
 
 func TestConfigKey(t *testing.T) {
 	cfg := mock_config.Make("ns", 2)
-	want := "MockConfig/ns/mock-config2"
+	want := "test.istio.io/v1/MockConfig/ns/mock-config2"
 	if key := cfg.Meta.Key(); key != want {
 		t.Fatalf("config.Key() => got %q, want %q", key, want)
 	}

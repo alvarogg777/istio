@@ -176,9 +176,11 @@ func (t *Translator) OverlayK8sSettings(yml string, iop *v1alpha1.IstioOperatorS
 	if err != nil {
 		return "", err
 	}
-	scope.Debugf("Manifest contains the following objects:")
-	for _, o := range objects {
-		scope.Debugf("%s", o.HashNameKind())
+	if scope.DebugEnabled() {
+		scope.Debugf("Manifest contains the following objects:")
+		for _, o := range objects {
+			scope.Debugf("%s", o.HashNameKind())
+		}
 	}
 	// om is a map of kind:name string to Object ptr.
 	om := objects.ToNameKindMap()
@@ -682,7 +684,7 @@ func MergeK8sObject(base *object.K8sObject, overlayNode interface{}, path util.P
 		return nil, err
 	}
 
-	return newObj, nil
+	return newObj.ResolveK8sConflict(), nil
 }
 
 // createPatchObjectFromPath constructs patch object for node with path, returns nil object and error if the path is invalid.

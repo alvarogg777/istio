@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: zipkin
-          image: openzipkin/zipkin-slim:2.23
+          image: openzipkin/zipkin-slim:2.23.4
           env:
             - name: TZ
               value: Europe/Madrid

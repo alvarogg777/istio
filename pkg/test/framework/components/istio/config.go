@@ -48,6 +48,18 @@ const (
 	// on remote clusters for integration tests when --istio.test.istio.istiodlessRemotes is set.
 	IntegrationTestIstiodlessRemoteDefaultsIOP = "tests/integration/iop-istiodless-remote-integration-test-defaults.yaml"
 
+	// IntegrationTestExternalIstiodPrimaryDefaultsIOP is the path of the default IstioOperator spec to use
+	// on external istiod primary clusters for integration tests
+	IntegrationTestExternalIstiodPrimaryDefaultsIOP = "tests/integration/iop-externalistiod-primary-integration-test-defaults.yaml"
+
+	// IntegrationTestExternalIstiodConfigDefaultsIOP is the path of the default IstioOperator spec to use
+	// on external istiod config clusters for integration tests
+	IntegrationTestExternalIstiodConfigDefaultsIOP = "tests/integration/iop-externalistiod-config-integration-test-defaults.yaml"
+
+	// IntegrationTestExternalIstiodRemoteDefaultsIOP is the path of the default IstioOperator spec to use
+	// on external istiod remote clusters for integration tests
+	IntegrationTestExternalIstiodRemoteDefaultsIOP = "tests/integration/iop-externalistiod-remote-integration-test-defaults.yaml"
+
 	// DefaultDeployTimeout for Istio
 	DefaultDeployTimeout = time.Second * 300
 
@@ -82,6 +94,7 @@ var (
 		DeployEastWestGW:        true,
 		DumpKubernetesManifests: false,
 		IstiodlessRemotes:       false,
+		EnableCNI:               false,
 	}
 )
 
@@ -166,6 +179,9 @@ type Config struct {
 
 	// OperatorOptions overrides default operator configuration.
 	OperatorOptions map[string]string
+
+	// EnableCNI indicates the test should have CNI enabled.
+	EnableCNI bool
 }
 
 func (c *Config) OverridesYAML() string {
@@ -346,6 +362,7 @@ func (c *Config) String() string {
 	result += fmt.Sprintf("DumpKubernetesManifests:        %v\n", c.DumpKubernetesManifests)
 	result += fmt.Sprintf("IstiodlessRemotes:              %v\n", c.IstiodlessRemotes)
 	result += fmt.Sprintf("OperatorOptions:                %v\n", c.OperatorOptions)
+	result += fmt.Sprintf("EnableCNI:                      %v\n", c.EnableCNI)
 
 	return result
 }

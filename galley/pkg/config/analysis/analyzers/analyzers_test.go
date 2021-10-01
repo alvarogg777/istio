@@ -297,6 +297,12 @@ var testGrid = []testCase{
 		},
 	},
 	{
+		name:       "deploymentMultiServicesInDifferentNamespace",
+		inputFiles: []string{"testdata/deployment-multi-service-different-ns.yaml"},
+		analyzer:   &deployment.ServiceAssociationAnalyzer{},
+		expected:   []message{},
+	},
+	{
 		name: "regexes",
 		inputFiles: []string{
 			"testdata/virtualservice_regexes.yaml",
@@ -415,6 +421,7 @@ var testGrid = []testCase{
 		name: "dupmatches",
 		inputFiles: []string{
 			"testdata/virtualservice_dupmatches.yaml",
+			"testdata/virtualservice_overlappingmatches.yaml",
 		},
 		analyzer: schemaValidation.CollectionValidationAnalyzer(collections.IstioNetworkingV1Alpha3Virtualservices),
 		expected: []message{
@@ -431,6 +438,11 @@ var testGrid = []testCase{
 			{msg.VirtualServiceUnreachableRule, "VirtualService tls-routing.none"},
 			{msg.VirtualServiceIneffectiveMatch, "VirtualService tls-routing-almostmatch.none"},
 			{msg.VirtualServiceIneffectiveMatch, "VirtualService tls-routing.none"},
+
+			{msg.VirtualServiceIneffectiveMatch, "VirtualService non-method-get"},
+			{msg.VirtualServiceIneffectiveMatch, "VirtualService overlapping-in-single-match"},
+			{msg.VirtualServiceIneffectiveMatch, "VirtualService overlapping-in-two-matches"},
+			{msg.VirtualServiceIneffectiveMatch, "VirtualService overlapping-mathes-with-different-methods"},
 		},
 	},
 	{
@@ -444,6 +456,16 @@ var testGrid = []testCase{
 			{msg.VirtualServiceHostNotFoundInGateway, "VirtualService testing-service-02-test-02.default"},
 			{msg.VirtualServiceHostNotFoundInGateway, "VirtualService testing-service-02-test-03.default"},
 			{msg.VirtualServiceHostNotFoundInGateway, "VirtualService testing-service-03-test-04.default"},
+		},
+	},
+	{
+		name: "host defined in virtualservice not found in the gateway",
+		inputFiles: []string{
+			"testdata/virtualservice_host_not_found_gateway_with_ns_prefix.yaml",
+		},
+		analyzer: &virtualservice.GatewayAnalyzer{},
+		expected: []message{
+			{msg.VirtualServiceHostNotFoundInGateway, "VirtualService testing-service-01-test-01.default"},
 		},
 	},
 	{
@@ -531,6 +553,17 @@ var testGrid = []testCase{
 		analyzer: &deployment.ApplicationUIDAnalyzer{},
 		expected: []message{
 			{msg.InvalidApplicationUID, "Deployment deploy-con-sec-uid"},
+		},
+	},
+	{
+		name: "Detect `image: auto` in non-injected pods",
+		inputFiles: []string{
+			"testdata/image-auto.yaml",
+		},
+		analyzer: &injection.ImageAutoAnalyzer{},
+		expected: []message{
+			{msg.ImageAutoWithoutInjectionWarning, "Deployment non-injected-gateway-deployment.not-injected"},
+			{msg.ImageAutoWithoutInjectionError, "Pod injected-pod.default"},
 		},
 	},
 }

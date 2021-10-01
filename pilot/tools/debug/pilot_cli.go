@@ -253,11 +253,12 @@ func portForwardPilot(kubeConfig, pilotURL string) (*os.Process, string, error) 
 	// Make sure istio-pilot is reachable.
 	reachable := false
 	url := fmt.Sprintf("localhost:%d", localPort)
-	for i := 0; i < 10 && !reachable; i++ {
+	for i := 0; i < 10; i++ {
 		conn, err := net.Dial("tcp", url)
 		if err == nil {
 			_ = conn.Close()
 			reachable = true
+			break
 		}
 		time.Sleep(1 * time.Second)
 	}
@@ -270,7 +271,7 @@ func portForwardPilot(kubeConfig, pilotURL string) (*os.Process, string, error) 
 func main() {
 	kubeConfig := flag.String("kubeconfig", "~/.kube/config", "path to the kubeconfig file. Default is ~/.kube/config")
 	pilotURL := flag.String("pilot", "", "pilot address. Will try port forward if not provided.")
-	configType := flag.String("type", "lds", "lds, cds, or eds. Default lds.")
+	configType := flag.String("type", "lds", "lds, cds, rds or eds. Default lds.")
 	proxyType := flag.String("proxytype", "", "sidecar, ingress, router.")
 	proxyTag := flag.String("proxytag", "", "Pod name or app label or istio label to identify the proxy.")
 	resources := flag.String("res", "", "Resource(s) to get config for. LDS/CDS should leave it empty.")
@@ -310,7 +311,7 @@ func main() {
 	strResponse, _ := gogoprotomarshal.ToJSONWithIndent(resp, " ")
 	if outputFile == nil || *outputFile == "" {
 		fmt.Printf("%v\n", strResponse)
-	} else if err := ioutil.WriteFile(*outputFile, []byte(strResponse), 0644); err != nil {
+	} else if err := ioutil.WriteFile(*outputFile, []byte(strResponse), 0o644); err != nil {
 		log.Errorf("Cannot write output to file %q", *outputFile)
 	}
 }

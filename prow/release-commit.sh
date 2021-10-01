@@ -32,7 +32,7 @@ DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-build/dev}
 
 # Use a pinned version in case breaking changes are needed
-BUILDER_SHA=9bb5764dc9085e1b996e12e0dceb1454232c0f34
+BUILDER_SHA=e50761c08decef143ebcd7f9edc6f07e8a6aca89
 
 # Reference to the next minor version of Istio
 # This will create a version like 1.4-alpha.sha
@@ -65,16 +65,16 @@ ${DEPENDENCIES:-$(cat <<EOD
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.11
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: master
+    branch: release-1.11
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.11
 EOD
 )}
 dashboards:
@@ -100,6 +100,6 @@ release-builder validate --release "${WORK_DIR}/out"
 
 if [[ -z "${DRY_RUN:-}" ]]; then
   release-builder publish --release "${WORK_DIR}/out" \
-    --gcsbucket "${GCS_BUCKET}" --gcsaliases "${NEXT_VERSION}-dev,latest" \
-    --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION},${NEXT_VERSION}-dev,latest"
+    --gcsbucket "${GCS_BUCKET}" --gcsaliases "${NEXT_VERSION}-dev" \
+    --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION},${NEXT_VERSION}-dev"
 fi

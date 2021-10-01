@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -42,7 +43,6 @@ import (
 	"istio.io/istio/security/pkg/monitoring"
 	"istio.io/istio/security/pkg/nodeagent/util"
 	ca2 "istio.io/istio/security/pkg/server/ca"
-	"istio.io/istio/tests/util/leak"
 )
 
 const (
@@ -117,7 +117,7 @@ func serve(t *testing.T, ca mockCAServer, opts ...grpc.ServerOption) string {
 func TestCitadelClientRotation(t *testing.T) {
 	checkSign := func(t *testing.T, cli security.Client, expectError bool) {
 		t.Helper()
-		resp, err := cli.CSRSign([]byte{01}, 1)
+		resp, err := cli.CSRSign([]byte{0o1}, 1)
 		if expectError != (err != nil) {
 			t.Fatalf("expected error:%v, got error:%v", expectError, err)
 		}
@@ -220,7 +220,7 @@ func TestCitadelClient(t *testing.T) {
 			}
 			t.Cleanup(cli.Close)
 
-			resp, err := cli.CSRSign([]byte{01}, 1)
+			resp, err := cli.CSRSign([]byte{0o1}, 1)
 			if err != nil {
 				if !strings.Contains(err.Error(), tc.expectedErr) {
 					t.Errorf("error (%s) does not match expected error (%s)", err.Error(), tc.expectedErr)
@@ -337,7 +337,7 @@ func TestCitadelClientWithDifferentTypeToken(t *testing.T) {
 					return fmt.Errorf("failed to create ca client: %v", err)
 				}
 				t.Cleanup(cli.Close)
-				resp, err := cli.CSRSign([]byte{01}, 1)
+				resp, err := cli.CSRSign([]byte{0o1}, 1)
 				if err != nil {
 					if !strings.Contains(err.Error(), tc.expectedErr) {
 						return fmt.Errorf("error (%s) does not match expected error (%s)", err.Error(), tc.expectedErr)
@@ -358,6 +358,58 @@ func TestCitadelClientWithDifferentTypeToken(t *testing.T) {
 	}
 }
 
-func TestMain(m *testing.M) {
-	leak.CheckMain(m)
+func TestCertExpired(t *testing.T) {
+	testCases := map[string]struct {
+		filepath string
+		expected bool
+	}{
+		"Expired Cert": {
+			filepath: "./testdata/expired-cert.pem",
+			expected: true,
+		},
+		"Not Expired Cert": {
+			filepath: "./testdata/notexpired-cert.pem",
+			expected: false,
+		},
+	}
+	for id, tc := range testCases {
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+		s := grpc.NewServer()
+		defer func() {
+			s.Stop()
+			wg.Wait()
+		}()
+
+		lis, err := net.Listen("tcp", mockServerAddress)
+		if err != nil {
+			t.Fatalf("failed to listen: %v", err)
+		}
+
+		go func() {
+			defer wg.Done()
+			pb.RegisterIstioCertificateServiceServer(s, &mockTokenCAServer{Certs: []string{}})
+			if err := s.Serve(lis); err != nil {
+				t.Logf("failed to serve: %v", err)
+			}
+		}()
+
+		opts := &security.Options{CAEndpoint: lis.Addr().String(), ClusterID: "Kubernetes", CredFetcher: plugin.CreateMockPlugin(validToken)}
+		cli, err := NewCitadelClient(opts, false, nil)
+		if err != nil {
+			t.Fatalf("failed to create ca client: %v", err)
+		}
+
+		t.Cleanup(cli.Close)
+		t.Run(id, func(t *testing.T) {
+			certExpired, err := cli.isCertExpired(tc.filepath)
+			if err != nil {
+				t.Fatalf("failed to check the cert, err is: %v", err)
+			}
+			if certExpired != tc.expected {
+				t.Errorf("isCertExpired: get %v, want %v", certExpired, tc.expected)
+			}
+		})
+	}
 }

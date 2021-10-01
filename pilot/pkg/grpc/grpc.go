@@ -26,18 +26,17 @@ import (
 	"google.golang.org/grpc/status"
 
 	"istio.io/istio/pilot/pkg/features"
+	"istio.io/istio/pilot/pkg/util/sets"
 	istiokeepalive "istio.io/istio/pkg/keepalive"
 )
 
 type SendHandler func() error
 
-var timeout = features.XdsPushSendTimeout
-
 // Send with timeout if specified. If timeout is zero, sends without timeout.
 func Send(ctx context.Context, send SendHandler) error {
-	if timeout.Nanoseconds() > 0 {
+	if features.XdsPushSendTimeout.Nanoseconds() > 0 {
 		errChan := make(chan error, 1)
-		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+		timeoutCtx, cancel := context.WithTimeout(ctx, features.XdsPushSendTimeout)
 		defer cancel()
 		go func() {
 			err := send()
@@ -79,6 +78,21 @@ func ServerOptions(options *istiokeepalive.Options, interceptors ...grpc.UnarySe
 	return grpcOptions
 }
 
+var expectedGrpcFailureMessages = sets.NewSet(
+	"client disconnected",
+	"error reading from server: EOF",
+	"transport is closing",
+)
+
+func containsExpectedMessage(msg string) bool {
+	for m := range expectedGrpcFailureMessages {
+		if strings.Contains(msg, m) {
+			return true
+		}
+	}
+	return false
+}
+
 // IsExpectedGRPCError checks a gRPC error code and determines whether it is an expected error when
 // things are operating normally. This is basically capturing when the client disconnects.
 func IsExpectedGRPCError(err error) bool {
@@ -90,7 +104,7 @@ func IsExpectedGRPCError(err error) bool {
 		if s.Code() == codes.Canceled || s.Code() == codes.DeadlineExceeded {
 			return true
 		}
-		if s.Code() == codes.Unavailable && (s.Message() == "client disconnected" || s.Message() == "transport is closing") {
+		if s.Code() == codes.Unavailable && containsExpectedMessage(s.Message()) {
 			return true
 		}
 	}

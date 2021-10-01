@@ -26,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"istio.io/istio/pkg/test/env"
 	"istio.io/istio/pkg/test/framework/components/cluster"
 	kubecluster "istio.io/istio/pkg/test/framework/components/cluster/kube"
 	"istio.io/istio/pkg/test/framework/components/environment/kube"
@@ -56,9 +55,6 @@ var (
 	_ resource.Dumper = &helmComponent{}
 )
 
-// chartPath is path of local Helm charts used for testing.
-var chartPath = filepath.Join(env.IstioSrc, "manifests/charts")
-
 type helmComponent struct {
 	id         resource.ID
 	settings   Config
@@ -75,7 +71,9 @@ func (h *helmComponent) Dump(ctx resource.Context) {
 		scopes.Framework.Errorf("Unable to create directory for dumping Istio contents: %v", err)
 		return
 	}
-	kube2.DumpPods(ctx, d, ns)
+	kube2.DumpPods(ctx, d, ns, []string{})
+	// Dump istio-cni
+	kube2.DumpPods(ctx, d, "kube-system", []string{"k8s-app=istio-cni-node"})
 }
 
 func (h *helmComponent) ID() resource.ID {
@@ -127,13 +125,13 @@ func deployWithHelm(ctx resource.Context, env *kube.Environment, cfg Config) (In
 	scopes.Framework.Infof("================================")
 
 	// install control plane clusters
-	cluster := ctx.Clusters().Default().(*kubecluster.Cluster)
-	helmCmd := helm.New(cluster.Filename(), chartPath)
+	cs := ctx.Clusters().Default().(*kubecluster.Cluster)
+	helmCmd := helm.New(cs.Filename())
 
 	h := &helmComponent{
 		settings: cfg,
 		helmCmd:  helmCmd,
-		cs:       cluster,
+		cs:       cs,
 	}
 
 	t0 := time.Now()

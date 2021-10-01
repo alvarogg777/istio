@@ -27,20 +27,32 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	ktesting "k8s.io/client-go/testing"
 
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pkg/cluster"
 	"istio.io/istio/pkg/jwt"
 	"istio.io/istio/pkg/security"
 	"istio.io/istio/security/pkg/server/ca/authenticate"
 )
 
+type mockMeshConfigHolder struct {
+	trustDomain string
+}
+
+func (mh mockMeshConfigHolder) Mesh() *meshconfig.MeshConfig {
+	return &meshconfig.MeshConfig{
+		TrustDomain: mh.trustDomain,
+	}
+}
+
 func TestNewKubeJWTAuthenticator(t *testing.T) {
-	trustDomain := "testdomain.com"
+	meshHolder := mockMeshConfigHolder{"testdomain.com"}
 	jwtPolicy := jwt.PolicyThirdParty
 
-	authenticator := NewKubeJWTAuthenticator(nil, "kubernetes", nil, trustDomain, jwtPolicy)
+	authenticator := NewKubeJWTAuthenticator(meshHolder, nil, "kubernetes", nil, jwtPolicy)
 	expectedAuthenticator := &KubeJWTAuthenticator{
-		trustDomain: trustDomain,
-		jwtPolicy:   jwtPolicy,
-		clusterID:   "kubernetes",
+		meshHolder: meshHolder,
+		jwtPolicy:  jwtPolicy,
+		clusterID:  "kubernetes",
 	}
 	if !reflect.DeepEqual(authenticator, expectedAuthenticator) {
 		t.Errorf("Unexpected authentication result: want %v but got %v",
@@ -50,8 +62,9 @@ func TestNewKubeJWTAuthenticator(t *testing.T) {
 
 func TestAuthenticate(t *testing.T) {
 	primaryCluster := "Kubernetes"
-	remoteCluster := "remote"
+	remoteCluster := cluster.ID("remote")
 	invlidToken := "invalid-token"
+	meshHolder := mockMeshConfigHolder{"example.com"}
 
 	testCases := map[string]struct {
 		remoteCluster  bool
@@ -143,7 +156,7 @@ func TestAuthenticate(t *testing.T) {
 				})
 			}
 
-			remoteKubeClientGetter := func(clusterID string) kubernetes.Interface {
+			remoteKubeClientGetter := func(clusterID cluster.ID) kubernetes.Interface {
 				if clusterID == remoteCluster {
 					client := fake.NewSimpleClientset()
 					if tc.remoteCluster {
@@ -155,7 +168,7 @@ func TestAuthenticate(t *testing.T) {
 				return nil
 			}
 
-			authenticator := NewKubeJWTAuthenticator(client, "Kubernetes", remoteKubeClientGetter, "example.com", tc.jwtPolicy)
+			authenticator := NewKubeJWTAuthenticator(meshHolder, client, "Kubernetes", remoteKubeClientGetter, tc.jwtPolicy)
 			actualCaller, err := authenticator.Authenticate(ctx)
 			if len(tc.expectedErrMsg) > 0 {
 				if err == nil {
@@ -177,6 +190,28 @@ func TestAuthenticate(t *testing.T) {
 
 			if !reflect.DeepEqual(actualCaller, expectedCaller) {
 				t.Errorf("Case %q: Unexpected token: want %v but got %v", id, expectedCaller, actualCaller)
+			}
+		})
+	}
+}
+
+func TestIsAllowedKubernetesAudience(t *testing.T) {
+	tests := []struct {
+		in   string
+		want bool
+	}{
+		{"kubernetes.default.svc", true},
+		{"kubernetes.default.svc.cluster.local", true},
+		{"https://kubernetes.default.svc", true},
+		{"https://kubernetes.default.svc.cluster.local", true},
+		{"foo.default.svc", false},
+		{"foo.default.svc:80", false},
+		{"https://foo.default.svc:80", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.in, func(t *testing.T) {
+			if got := isAllowedKubernetesAudience(tt.in); got != tt.want {
+				t.Errorf("isAllowedKubernetesAudience() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -225,9 +225,6 @@ func TestManifestGenerateIstiodRemote(t *testing.T) {
 		mwc := mustGetMutatingWebhookConfiguration(g, objs, "istio-sidecar-injector").Unstructured()
 		g.Expect(mwc).Should(HavePathValueEqual(PathValue{"webhooks.[0].clientConfig.url", "https://xxx:15017/inject"}))
 
-		vwc := mustGetValidatingWebhookConfiguration(g, objs, "istiod-istio-system").Unstructured()
-		g.Expect(vwc).Should(HavePathValueEqual(PathValue{"webhooks.[0].clientConfig.url", "https://xxx:15017/validate"}))
-
 		ep := mustGetEndpoint(g, objs, "istiod").Unstructured()
 		g.Expect(ep).Should(HavePathValueEqual(PathValue{"subsets.[0].addresses.[0]", endpointSubsetAddressVal("", "169.10.112.88", "")}))
 		g.Expect(ep).Should(HavePathValueContain(PathValue{"subsets.[0].ports.[0]", portVal("tcp-istiod", 15012, -1)}))
@@ -361,6 +358,10 @@ func TestManifestGeneratePilot(t *testing.T) {
 		// This can be seen from REGISTRY_ONLY not applying
 		{
 			desc:       "pilot_merge_meshconfig",
+			diffSelect: "ConfigMap:*:istio$",
+		},
+		{
+			desc:       "pilot_disable_tracing",
 			diffSelect: "ConfigMap:*:istio$",
 		},
 	})
@@ -755,6 +756,18 @@ func getWebhooks(t *testing.T, setFlags string, webhookName string) []v1.Mutatin
 	return mustGetWebhook(t, mustFindObject(t, objs, webhookName, name.MutatingWebhookConfigurationStr))
 }
 
+func getWebhooksFromYaml(t *testing.T, yml string) []v1.MutatingWebhook {
+	t.Helper()
+	objs, err := object.ParseK8sObjectsFromYAMLManifest(yml)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(objs) != 1 {
+		t.Fatal("expected one webhook")
+	}
+	return mustGetWebhook(t, *objs[0])
+}
+
 type LabelSet struct {
 	namespace, pod klabels.Set
 }
@@ -766,6 +779,79 @@ func mergeWebhooks(whs ...[]v1.MutatingWebhook) []v1.MutatingWebhook {
 	}
 	return res
 }
+
+const (
+	// istioctl manifest generate --set values.sidecarInjectorWebhook.useLegacySelectors=true
+	legacyDefaultInjector = `
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: istio-sidecar-injector
+webhooks:
+- name: sidecar-injector.istio.io
+  clientConfig:
+    service:
+      name: istiod
+      namespace: istio-system
+      path: "/inject"
+    caBundle: ""
+  sideEffects: None
+  rules:
+  - operations: [ "CREATE" ]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+  failurePolicy: Fail
+  admissionReviewVersions: ["v1beta1", "v1"]
+  namespaceSelector:
+    matchLabels:
+      istio-injection: enabled
+  objectSelector:
+    matchExpressions:
+    - key: "sidecar.istio.io/inject"
+      operator: NotIn
+      values:
+      - "false"
+`
+
+	// istioctl manifest generate --set values.sidecarInjectorWebhook.useLegacySelectors=true --set revision=canary
+	legacyRevisionInjector = `
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: istio-sidecar-injector-canary
+webhooks:
+- name: sidecar-injector.istio.io
+  clientConfig:
+    service:
+      name: istiod-canary
+      namespace: istio-system
+      path: "/inject"
+    caBundle: ""
+  sideEffects: None
+  rules:
+  - operations: [ "CREATE" ]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+  failurePolicy: Fail
+  admissionReviewVersions: ["v1beta1", "v1"]
+  namespaceSelector:
+    matchExpressions:
+    - key: istio-injection
+      operator: DoesNotExist
+    - key: istio.io/rev
+      operator: In
+      values:
+      - canary
+  objectSelector:
+    matchExpressions:
+    - key: "sidecar.istio.io/inject"
+      operator: NotIn
+      values:
+      - "false"
+`
+)
 
 // This test checks the mutating webhook selectors behavior, especially with interaction with revisions
 func TestWebhookSelector(t *testing.T) {
@@ -785,8 +871,8 @@ func TestWebhookSelector(t *testing.T) {
 	defaultWebhook := getWebhooks(t, "", "istio-sidecar-injector")
 	revWebhook := getWebhooks(t, "--set revision=canary", "istio-sidecar-injector-canary")
 	autoWebhook := getWebhooks(t, "--set values.sidecarInjectorWebhook.enableNamespacesByDefault=true", "istio-sidecar-injector")
-	legacyWebhook := getWebhooks(t, "--set values.sidecarInjectorWebhook.useLegacySelectors=true", "istio-sidecar-injector")
-	legacyRevWebhook := getWebhooks(t, "--set values.sidecarInjectorWebhook.useLegacySelectors=true --set revision=canary", "istio-sidecar-injector-canary")
+	legacyWebhook := getWebhooksFromYaml(t, legacyDefaultInjector)
+	legacyRevWebhook := getWebhooksFromYaml(t, legacyRevisionInjector)
 
 	// predicate is used to filter out "obvious" test cases, to avoid enumerating all cases
 	// nolint: unparam

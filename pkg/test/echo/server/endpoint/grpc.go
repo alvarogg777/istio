@@ -17,6 +17,7 @@ package endpoint
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -24,12 +25,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/admin"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
+	xdscreds "google.golang.org/grpc/credentials/xds"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/xds"
+	"k8s.io/utils/env"
 
+	"istio.io/istio/pkg/istio-agent/grpcxds"
 	"istio.io/istio/pkg/test/echo/common"
 	"istio.io/istio/pkg/test/echo/common/response"
 	"istio.io/istio/pkg/test/echo/proto"
@@ -39,9 +47,18 @@ import (
 
 var _ Instance = &grpcInstance{}
 
+// grpcServer is the intersection of used methods for grpc.Server and xds.GRPCServer
+type grpcServer interface {
+	reflection.GRPCServer
+	Serve(listener net.Listener) error
+	RegisterService(sd *grpc.ServiceDesc, ss interface{})
+	Stop()
+}
+
 type grpcInstance struct {
 	Config
-	server *grpc.Server
+	server   grpcServer
+	cleanups []func()
 }
 
 func newGRPC(config Config) Instance {
@@ -54,6 +71,17 @@ func (s *grpcInstance) GetConfig() Config {
 	return s.Config
 }
 
+func (s *grpcInstance) newServer(opts ...grpc.ServerOption) grpcServer {
+	if s.Port.XDSServer {
+		if len(s.Port.XDSTestBootstrap) > 0 {
+			opts = append(opts, xds.BootstrapContentsForTesting(s.Port.XDSTestBootstrap))
+		}
+		epLog.Infof("Using xDS for serverside gRPC on %d", s.Port.Port)
+		return xds.NewGRPCServer(opts...)
+	}
+	return grpc.NewServer(opts...)
+}
+
 func (s *grpcInstance) Start(onReady OnReadyFunc) error {
 	// Listen on the given port and update the port if it changed from what was passed in.
 	listener, p, err := listenOnAddress(s.ListenerIP, s.Port.Port)
@@ -63,26 +91,44 @@ func (s *grpcInstance) Start(onReady OnReadyFunc) error {
 	// Store the actual listening port back to the argument.
 	s.Port.Port = p
 
+	var opts []grpc.ServerOption
 	if s.Port.TLS {
-		fmt.Printf("Listening GRPC (over TLS) on %v\n", p)
+		epLog.Infof("Listening GRPC (over TLS) on %v", p)
 		// Create the TLS credentials
 		creds, errCreds := credentials.NewServerTLSFromFile(s.TLSCert, s.TLSKey)
 		if errCreds != nil {
 			epLog.Errorf("could not load TLS keys: %s", errCreds)
 		}
-		s.server = grpc.NewServer(grpc.Creds(creds))
+		opts = append(opts, grpc.Creds(creds))
+	} else if s.Port.XDSServer {
+		epLog.Infof("Listening GRPC (over xDS-configured mTLS) on %v", p)
+		creds, err := xdscreds.NewServerCredentials(xdscreds.ServerOptions{
+			FallbackCreds: insecure.NewCredentials(),
+		})
+		if err != nil {
+			return err
+		}
+		opts = append(opts, grpc.Creds(creds))
 	} else {
-		fmt.Printf("Listening GRPC on %v\n", p)
-		s.server = grpc.NewServer()
+		epLog.Infof("Listening GRPC on %v", p)
 	}
+	s.server = s.newServer(opts...)
+
 	proto.RegisterEchoTestServiceServer(s.server, &grpcHandler{
 		Config: s.Config,
 	})
 	reflection.Register(s.server)
-
+	if val, _ := env.GetBool("EXPOSE_GRPC_ADMIN", false); val {
+		cleanup, err := admin.Register(s.server)
+		if err != nil {
+			return err
+		}
+		s.cleanups = append(s.cleanups, cleanup)
+	}
 	// Start serving GRPC traffic.
 	go func() {
-		_ = s.server.Serve(listener)
+		err := s.server.Serve(listener)
+		epLog.Warnf("Port %d listener terminated with error: %v", p, err)
 	}()
 
 	// Notify the WaitGroup once the port has transitioned to ready.
@@ -95,11 +141,19 @@ func (s *grpcInstance) awaitReady(onReady OnReadyFunc, listener net.Listener) {
 	defer onReady()
 
 	err := retry.UntilSuccess(func() error {
+		cert, key, ca, err := s.certsFromBootstrapForReady()
+		if err != nil {
+			return err
+		}
 		f, err := forwarder.New(forwarder.Config{
+			XDSTestBootstrap: s.Port.XDSTestBootstrap,
 			Request: &proto.ForwardEchoRequest{
 				Url:           "grpc://" + listener.Addr().String(),
 				Message:       "hello",
 				TimeoutMicros: common.DurationToMicros(readyInterval),
+				CertFile:      cert,
+				KeyFile:       key,
+				CaCertFile:    ca,
 			},
 		})
 		defer func() {
@@ -119,20 +173,54 @@ func (s *grpcInstance) awaitReady(onReady OnReadyFunc, listener net.Listener) {
 	}
 }
 
+// TODO (hack) we have to send certs OR use xds:///fqdn. We don't know our own fqdn, and even if we did
+// we could send traffic to another instance. Instead we look into gRPC internals to authenticate with ourself.
+func (s *grpcInstance) certsFromBootstrapForReady() (cert string, key string, ca string, err error) {
+	if !s.Port.XDSServer {
+		return
+	}
+
+	var bootstrapData []byte
+	if data := s.Port.XDSTestBootstrap; len(data) > 0 {
+		bootstrapData = data
+	} else if path := os.Getenv("GRPC_XDS_BOOTSTRAP"); len(path) > 0 {
+		bootstrapData, err = os.ReadFile(path)
+	} else if data := os.Getenv("GRPC_XDS_BOOTSTRAP_CONFIG"); len(data) > 0 {
+		bootstrapData = []byte(data)
+	}
+	var bootstrap grpcxds.Bootstrap
+	if uerr := json.Unmarshal(bootstrapData, &bootstrap); uerr != nil {
+		err = uerr
+		return
+	}
+	certs := bootstrap.FileWatcherProvider()
+	if certs == nil {
+		err = fmt.Errorf("no certs found in bootstrap")
+		return
+	}
+	cert = certs.CertificateFile
+	key = certs.PrivateKeyFile
+	ca = certs.CACertificateFile
+	return
+}
+
 func (s *grpcInstance) Close() error {
 	if s.server != nil {
 		s.server.Stop()
+	}
+	for _, cleanup := range s.cleanups {
+		cleanup()
 	}
 	return nil
 }
 
 type grpcHandler struct {
+	proto.UnimplementedEchoTestServiceServer
 	Config
 }
 
 func (h *grpcHandler) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.EchoResponse, error) {
 	defer common.Metrics.GrpcRequests.With(common.PortLabel.Value(strconv.Itoa(h.Port.Port))).Increment()
-	host := "-"
 	body := bytes.Buffer{}
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
@@ -143,7 +231,6 @@ func (h *grpcHandler) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.
 			field := response.Field(key)
 			if key == ":authority" {
 				field = response.HostField
-				host = values[0]
 			}
 			for _, value := range values {
 				writeField(&body, field, value)
@@ -151,7 +238,8 @@ func (h *grpcHandler) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.
 		}
 	}
 
-	epLog.Infof("GRPC Request:\n  Host: %s\n  Message: %s\n  Headers: %v\n", host, req.GetMessage(), md)
+	id := uuid.New()
+	epLog.WithLabels("message", req.GetMessage(), "headers", md, "id", id).Infof("GRPC Request")
 
 	portNumber := 0
 	if h.Port != nil {
@@ -175,11 +263,14 @@ func (h *grpcHandler) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.
 		writeField(&body, response.HostnameField, hostname)
 	}
 
+	epLog.WithLabels("id", id).Infof("GRPC Response")
 	return &proto.EchoResponse{Message: body.String()}, nil
 }
 
 func (h *grpcHandler) ForwardEcho(ctx context.Context, req *proto.ForwardEchoRequest) (*proto.ForwardEchoResponse, error) {
-	epLog.Infof("ForwardEcho[%s] request", req.Url)
+	id := uuid.New()
+	l := epLog.WithLabels("url", req.Url, "id", id)
+	l.Infof("ForwardEcho request")
 	t0 := time.Now()
 	instance, err := forwarder.New(forwarder.Config{
 		Request: req,
@@ -191,6 +282,10 @@ func (h *grpcHandler) ForwardEcho(ctx context.Context, req *proto.ForwardEchoReq
 	defer instance.Close()
 
 	ret, err := instance.Run(ctx)
-	epLog.Infof("ForwardEcho[%s] response in %v: %v and error %v", req.Url, time.Since(t0), ret.GetOutput(), err)
+	if err == nil {
+		l.WithLabels("latency", time.Since(t0)).Infof("ForwardEcho response complete: %v", ret.GetOutput())
+	} else {
+		l.WithLabels("latency", time.Since(t0)).Infof("ForwardEcho response failed: %v", err)
+	}
 	return ret, err
 }

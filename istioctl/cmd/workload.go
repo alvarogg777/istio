@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"sort"
@@ -61,7 +62,8 @@ var (
 	outputDir      string
 	clusterID      string
 	ingressIP      string
-	workloadIP     string
+	internalIP     string
+	externalIP     string
 	ingressSvc     string
 	autoRegister   bool
 	dnsCapture     bool
@@ -220,10 +222,16 @@ Configure requires either the WorkloadGroup artifact path or its location on the
 					return fmt.Errorf("workloadgroup %s not found in namespace %s: %v", name, namespace, err)
 				}
 			}
-			if err = createConfig(kubeClient, wg, clusterID, ingressIP, workloadIP, outputDir, cmd.OutOrStderr()); err != nil {
+			if err = createConfig(kubeClient, wg, clusterID, ingressIP, internalIP, externalIP, outputDir, cmd.OutOrStderr()); err != nil {
 				return err
 			}
 			fmt.Printf("configuration generation into directory %s was successful\n", outputDir)
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(internalIP) > 0 && len(externalIP) > 0 {
+				return fmt.Errorf("the flags --internalIP and --externalIP are mutually exclusive")
+			}
 			return nil
 		},
 	}
@@ -238,7 +246,8 @@ Configure requires either the WorkloadGroup artifact path or its location on the
 	configureCmd.PersistentFlags().StringVar(&ingressIP, "ingressIP", "", "IP address of the ingress gateway")
 	configureCmd.PersistentFlags().BoolVar(&autoRegister, "autoregister", false, "Creates a WorkloadEntry upon connection to istiod (if enabled in pilot).")
 	configureCmd.PersistentFlags().BoolVar(&dnsCapture, "capture-dns", true, "Enables the capture of outgoing DNS packets on port 53, redirecting to istio-agent")
-	configureCmd.PersistentFlags().StringVar(&workloadIP, "workloadIP", "", "IP address of the workload used in the WorkloadEntry")
+	configureCmd.PersistentFlags().StringVar(&internalIP, "internalIP", "", "Internal IP address of the workload")
+	configureCmd.PersistentFlags().StringVar(&externalIP, "externalIP", "", "External IP address of the workload")
 	opts.AttachControlPlaneFlags(configureCmd)
 	return configureCmd
 }
@@ -268,8 +277,8 @@ func readWorkloadGroup(filename string, wg *clientv1alpha3.WorkloadGroup) error 
 }
 
 // Creates all the relevant config for the given workload group and cluster
-func createConfig(kubeClient kube.ExtendedClient, wg *clientv1alpha3.WorkloadGroup, clusterID, ingressIP, workloadIP,
-	outputDir string, out io.Writer) error {
+func createConfig(kubeClient kube.ExtendedClient, wg *clientv1alpha3.WorkloadGroup, clusterID, ingressIP, internalIP,
+	externalIP string, outputDir string, out io.Writer) error {
 	if err := os.MkdirAll(outputDir, filePerms); err != nil {
 		return err
 	}
@@ -283,7 +292,7 @@ func createConfig(kubeClient kube.ExtendedClient, wg *clientv1alpha3.WorkloadGro
 	if err := createClusterEnv(wg, proxyConfig, outputDir); err != nil {
 		return err
 	}
-	if err := createSidecarEnv(workloadIP, outputDir); err != nil {
+	if err := createSidecarEnv(internalIP, externalIP, outputDir); err != nil {
 		return err
 	}
 	if err := createCertsTokens(kubeClient, wg, outputDir, out); err != nil {
@@ -309,8 +318,14 @@ func createClusterEnv(wg *clientv1alpha3.WorkloadGroup, config *meshconfig.Proxy
 	}
 
 	excludePorts := "15090,15021"
-	if config.StatusPort != 15090 && config.StatusPort != 15021 && config.StatusPort != 0 {
-		excludePorts += fmt.Sprintf(",%d", config.StatusPort)
+	if config.StatusPort != 15090 && config.StatusPort != 15021 {
+		if config.StatusPort != 0 {
+			// Explicit status port set, use that
+			excludePorts += fmt.Sprintf(",%d", config.StatusPort)
+		} else {
+			// use default status port
+			excludePorts += ",15020"
+		}
 	}
 	// default attributes and service name, namespace, ports, service account, service CIDR
 	overrides := map[string]string{
@@ -334,10 +349,8 @@ func createClusterEnv(wg *clientv1alpha3.WorkloadGroup, config *meshconfig.Proxy
 	return ioutil.WriteFile(filepath.Join(dir, "cluster.env"), []byte(mapToString(clusterEnv)), filePerms)
 }
 
-func createSidecarEnv(workloadIP string, dir string) error {
-	sidecarEnv := map[string]string{
-		"ISTIO_SVC_IP": workloadIP,
-	}
+func createSidecarEnv(internalIP string, externalIP, dir string) error {
+	sidecarEnv := generateSidecarEnvAsMap(internalIP, externalIP)
 
 	// If there is no sidecar specific configuration, then don't write the file and exit first.
 	allEmpty := true
@@ -351,6 +364,18 @@ func createSidecarEnv(workloadIP string, dir string) error {
 	}
 
 	return ioutil.WriteFile(filepath.Join(dir, "sidecar.env"), []byte(mapToString(sidecarEnv)), filePerms)
+}
+
+func generateSidecarEnvAsMap(internalIP string, externalIP string) map[string]string {
+	sidecarEnv := make(map[string]string)
+
+	if len(internalIP) > 0 {
+		sidecarEnv["ISTIO_SVC_IP"] = internalIP
+	} else if len(externalIP) > 0 {
+		sidecarEnv["ISTIO_SVC_IP"] = externalIP
+		sidecarEnv["REWRITE_PROBE_LEGACY_LOCALHOST_DESTINATION"] = "true"
+	}
+	return sidecarEnv
 }
 
 // Get and store the needed certificate and token. The certificate comes from the CA root cert, and
@@ -436,6 +461,9 @@ func createMeshConfig(kubeClient kube.ExtendedClient, wg *clientv1alpha3.Workloa
 	if err := gogoprotomarshal.ApplyYAML(istio.Data[configMapKey], meshConfig); err != nil {
 		return nil, err
 	}
+	if revision != "" && revision != "default" && meshConfig.DefaultConfig.DiscoveryAddress == "" {
+		meshConfig.DefaultConfig.DiscoveryAddress = fmt.Sprintf("istiod-%s.%s.svc.cluster.local", revision, istioNamespace)
+	}
 
 	// performing separate map-merge, apply seems to completely overwrite all metadata
 	proxyMetadata := meshConfig.DefaultConfig.ProxyMetadata
@@ -472,6 +500,7 @@ func createMeshConfig(kubeClient kube.ExtendedClient, wg *clientv1alpha3.Workloa
 	md := meshConfig.DefaultConfig.ProxyMetadata
 	if md == nil {
 		md = map[string]string{}
+		meshConfig.DefaultConfig.ProxyMetadata = md
 	}
 	md["CANONICAL_SERVICE"], md["CANONICAL_REVISION"] = inject.ExtractCanonicalServiceLabels(labels, wg.Name)
 	md["POD_NAMESPACE"] = wg.Namespace
@@ -547,7 +576,7 @@ func createHosts(kubeClient kube.ExtendedClient, ingressIP, dir string) error {
 	if revision != "" && revision != "default" {
 		istiod = fmt.Sprintf("%s-%s", istiod, revision)
 	}
-	if ingressIP != "" {
+	if net.ParseIP(ingressIP) != nil {
 		hosts = fmt.Sprintf("%s %s.%s.svc\n", ingressIP, istiod, istioNamespace)
 	} else {
 		log.Warnf("Could not auto-detect IP for %s.%s. Use --ingressIP to manually specify the Gateway address to reach istiod from the VM.", istiod, istioNamespace)

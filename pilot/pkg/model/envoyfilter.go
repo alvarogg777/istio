@@ -20,6 +20,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 
 	networking "istio.io/api/networking/v1alpha3"
+	"istio.io/istio/pilot/pkg/util/sets"
 	"istio.io/istio/pkg/config"
 	"istio.io/istio/pkg/config/labels"
 	"istio.io/istio/pkg/config/xds"
@@ -46,6 +47,8 @@ type EnvoyFilterConfigPatchWrapper struct {
 	// regex match, but as an optimization we can reduce this to a prefix match for common cases.
 	// If this is set, ProxyVersionRegex is ignored.
 	ProxyPrefixMatch string
+	Name             string
+	Namespace        string
 }
 
 // wellKnownVersions defines a mapping of well known regex matches to prefix matches
@@ -83,6 +86,8 @@ func convertToEnvoyFilterWrapper(local *config.Config) *EnvoyFilterWrapper {
 			continue
 		}
 		cpw := &EnvoyFilterConfigPatchWrapper{
+			Name:      local.Name,
+			Namespace: local.Namespace,
 			ApplyTo:   cp.ApplyTo,
 			Match:     cp.Match,
 			Operation: cp.Patch.Operation,
@@ -160,9 +165,23 @@ func proxyMatch(proxy *Proxy, cp *EnvoyFilterConfigPatchWrapper) bool {
 	return true
 }
 
-func (efw *EnvoyFilterWrapper) Key() string {
+// Returns all the wrapped envoyfilters keys in increasing order .
+func (efw *EnvoyFilterWrapper) Keys() []string {
 	if efw == nil {
+		return nil
+	}
+	keys := sets.Set{}
+	for _, patches := range efw.Patches {
+		for _, patch := range patches {
+			keys.Insert(patch.Key())
+		}
+	}
+	return keys.SortedList()
+}
+
+func (cpw *EnvoyFilterConfigPatchWrapper) Key() string {
+	if cpw == nil {
 		return ""
 	}
-	return efw.Namespace + "/" + efw.Name
+	return cpw.Namespace + "/" + cpw.Name
 }

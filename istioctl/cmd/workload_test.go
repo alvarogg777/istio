@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -169,6 +170,7 @@ func TestWorkloadEntryConfigure(t *testing.T) {
 			testdir := path.Join("testdata/vmconfig", dir.Name())
 			kubeClientWithRevision = func(_, _, _ string) (kube.ExtendedClient, error) {
 				return &kube.MockClient{
+					RevisionValue: "rev-1",
 					Interface: fake.NewSimpleClientset(
 						&v1.ServiceAccount{
 							ObjectMeta: metav1.ObjectMeta{Namespace: "bar", Name: "vm-serviceaccount"},
@@ -179,7 +181,7 @@ func TestWorkloadEntryConfigure(t *testing.T) {
 							Data:       map[string]string{"root-cert.pem": string(fakeCACert)},
 						},
 						&v1.ConfigMap{
-							ObjectMeta: metav1.ObjectMeta{Namespace: "istio-system", Name: "istio"},
+							ObjectMeta: metav1.ObjectMeta{Namespace: "istio-system", Name: "istio-rev-1"},
 							Data: map[string]string{
 								"mesh": string(util.ReadFile(path.Join(testdir, "meshconfig.yaml"), t)),
 							},
@@ -187,7 +189,7 @@ func TestWorkloadEntryConfigure(t *testing.T) {
 						&v1.Secret{
 							ObjectMeta: metav1.ObjectMeta{Namespace: "bar", Name: "test"},
 							Data: map[string][]byte{
-								"token": []byte{},
+								"token": {},
 							},
 						},
 					),
@@ -197,7 +199,7 @@ func TestWorkloadEntryConfigure(t *testing.T) {
 			cmd := []string{
 				"x", "workload", "entry", "configure",
 				"-f", path.Join("testdata/vmconfig", dir.Name(), "workloadgroup.yaml"),
-				"--workloadIP", "10.10.10.10",
+				"--internalIP", "10.10.10.10",
 				"-o", testdir,
 			}
 			if _, err := runTestCmd(t, cmd); err != nil {
@@ -211,30 +213,62 @@ func TestWorkloadEntryConfigure(t *testing.T) {
 				".gitignore": false, "meshconfig.yaml": false, "workloadgroup.yaml": false,
 			}
 
-			outputFiles, err := ioutil.ReadDir(testdir)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			for _, f := range outputFiles {
-				checkGolden, ok := checkFiles[f.Name()]
-				if !ok {
-					if checkGolden, ok := checkFiles[f.Name()[:len(f.Name())-len(goldenSuffix)]]; !(checkGolden && ok) {
-						t.Errorf("unexpected file in output dir: %s", f.Name())
-					}
-					continue
-				}
-				if checkGolden {
-					t.Run(f.Name(), func(t *testing.T) {
-						contents := util.ReadFile(path.Join(testdir, f.Name()), t)
-						goldenFile := path.Join(testdir, f.Name()+goldenSuffix)
-						util.RefreshGoldenFile(contents, goldenFile, t)
-						util.CompareContent(contents, goldenFile, t)
-					})
-				}
-			}
+			checkOutputFiles(t, testdir, checkFiles)
 		})
 	}
+}
+
+// TestWorkloadEntryConfigureNilProxyMetadata tests a particular use case when the
+// proxyMetadata is nil, no metadata would be generated at all.
+func TestWorkloadEntryConfigureNilProxyMetadata(t *testing.T) {
+	testdir := "testdata/vmconfig-nil-proxy-metadata"
+
+	kubeClientWithRevision = func(_, _, _ string) (kube.ExtendedClient, error) {
+		return &kube.MockClient{
+			Interface: fake.NewSimpleClientset(
+				&v1.ServiceAccount{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "bar", Name: "vm-serviceaccount"},
+					Secrets:    []v1.ObjectReference{{Name: "test"}},
+				},
+				&v1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "bar", Name: "istio-ca-root-cert"},
+					Data:       map[string]string{"root-cert.pem": string(fakeCACert)},
+				},
+				&v1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "istio-system", Name: "istio"},
+					Data: map[string]string{
+						"mesh": "defaultConfig: {}",
+					},
+				},
+				&v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "bar", Name: "test"},
+					Data: map[string][]byte{
+						"token": {},
+					},
+				},
+			),
+		}, nil
+	}
+
+	cmd := []string{
+		"x", "workload", "entry", "configure",
+		"-f", path.Join(testdir, "workloadgroup.yaml"),
+		"--internalIP", "10.10.10.10",
+		"-o", testdir,
+	}
+	if output, err := runTestCmd(t, cmd); err != nil {
+		t.Logf("output: %v", output)
+		t.Fatal(err)
+	}
+
+	checkFiles := map[string]bool{
+		// outputs to check
+		"mesh.yaml": true, "istio-token": true, "hosts": true, "root-cert.pem": true, "cluster.env": true, "sidecar.env": true,
+		// inputs that we allow to exist, if other files seep in unexpectedly we fail the test
+		".gitignore": false, "workloadgroup.yaml": false,
+	}
+
+	checkOutputFiles(t, testdir, checkFiles)
 }
 
 func runTestCmd(t *testing.T, args []string) (string, error) {
@@ -247,4 +281,54 @@ func runTestCmd(t *testing.T, args []string) (string, error) {
 	err := rootCmd.Execute()
 	output := out.String()
 	return output, err
+}
+
+func checkOutputFiles(t *testing.T, testdir string, checkFiles map[string]bool) {
+	t.Helper()
+
+	outputFiles, err := ioutil.ReadDir(testdir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, f := range outputFiles {
+		checkGolden, ok := checkFiles[f.Name()]
+		if !ok {
+			if checkGolden, ok := checkFiles[f.Name()[:len(f.Name())-len(goldenSuffix)]]; !(checkGolden && ok) {
+				t.Errorf("unexpected file in output dir: %s", f.Name())
+			}
+			continue
+		}
+		if checkGolden {
+			t.Run(f.Name(), func(t *testing.T) {
+				contents := util.ReadFile(path.Join(testdir, f.Name()), t)
+				goldenFile := path.Join(testdir, f.Name()+goldenSuffix)
+				util.RefreshGoldenFile(contents, goldenFile, t)
+				util.CompareContent(contents, goldenFile, t)
+			})
+		}
+	}
+}
+
+func TestSidecarConfigGeneration(t *testing.T) {
+	tests := []struct {
+		internalIP         string
+		externalIP         string
+		expectedSidecarEnv map[string]string
+	}{
+		{internalIP: "10.10.10.10", externalIP: "/", expectedSidecarEnv: map[string]string{
+			"ISTIO_SVC_IP": "10.10.10.10",
+		}},
+		{internalIP: "", externalIP: "20.20.20.20", expectedSidecarEnv: map[string]string{
+			"ISTIO_SVC_IP": "20.20.20.20",
+			"REWRITE_PROBE_LEGACY_LOCALHOST_DESTINATION": "true",
+		}},
+	}
+
+	for _, tt := range tests {
+		gotSidecarEnvMap := generateSidecarEnvAsMap(tt.internalIP, tt.externalIP)
+		if !reflect.DeepEqual(gotSidecarEnvMap, tt.expectedSidecarEnv) {
+			t.Errorf("generateSidecarEnvAsMap() got = %v, want %v", gotSidecarEnvMap, tt.expectedSidecarEnv)
+		}
+	}
 }

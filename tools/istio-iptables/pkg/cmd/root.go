@@ -52,7 +52,10 @@ var rootCmd = &cobra.Command{
 		if cfg.DryRun {
 			ext = &dep.StdoutStubDependencies{}
 		} else {
-			ext = &dep.RealDependencies{}
+			ext = &dep.RealDependencies{
+				CNIMode:          cfg.CNIMode,
+				NetworkNamespace: cfg.NetworkNamespace,
+			}
 		}
 
 		iptConfigurator := NewIptablesConfigurator(cfg, ext)
@@ -93,11 +96,16 @@ func constructConfig() *config.Config {
 		OutboundIPRangesInclude: viper.GetString(constants.ServiceCidr),
 		OutboundIPRangesExclude: viper.GetString(constants.ServiceExcludeCidr),
 		KubevirtInterfaces:      viper.GetString(constants.KubeVirtInterfaces),
+		ExcludeInterfaces:       viper.GetString(constants.ExcludeInterfaces),
 		IptablesProbePort:       uint16(viper.GetUint(constants.IptablesProbePort)),
 		ProbeTimeout:            viper.GetDuration(constants.ProbeTimeout),
 		SkipRuleApply:           viper.GetBool(constants.SkipRuleApply),
 		RunValidation:           viper.GetBool(constants.RunValidation),
 		RedirectDNS:             viper.GetBool(constants.RedirectDNS),
+		CaptureAllDNS:           viper.GetBool(constants.CaptureAllDNS),
+		OutputPath:              viper.GetString(constants.OutputPath),
+		NetworkNamespace:        viper.GetString(constants.NetworkNamespace),
+		CNIMode:                 viper.GetBool(constants.CNIMode),
 	}
 
 	// TODO: Make this more configurable, maybe with an allowlist of users to be captured for output instead of a denylist.
@@ -126,7 +134,9 @@ func constructConfig() *config.Config {
 
 	// Lookup DNS nameservers. We only do this if DNS is enabled in case of some obscure theoretical
 	// case where reading /etc/resolv.conf could fail.
-	if cfg.RedirectDNS {
+	// If capture all DNS option is enabled, we don't need to read from the dns resolve conf. All
+	// traffic to port 53 will be captured.
+	if cfg.RedirectDNS && !cfg.CaptureAllDNS {
 		dnsConfig, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 		if err != nil {
 			panic(fmt.Sprintf("failed to load /etc/resolv.conf: %v", err))
@@ -212,6 +222,11 @@ func bindFlags(cmd *cobra.Command, args []string) {
 	}
 	viper.SetDefault(constants.LocalExcludePorts, "")
 
+	if err := viper.BindPFlag(constants.ExcludeInterfaces, cmd.Flags().Lookup(constants.ExcludeInterfaces)); err != nil {
+		handleError(err)
+	}
+	viper.SetDefault(constants.ExcludeInterfaces, "")
+
 	if err := viper.BindPFlag(constants.ServiceCidr, cmd.Flags().Lookup(constants.ServiceCidr)); err != nil {
 		handleError(err)
 	}
@@ -281,6 +296,26 @@ func bindFlags(cmd *cobra.Command, args []string) {
 		handleError(err)
 	}
 	viper.SetDefault(constants.RedirectDNS, dnsCaptureByAgent)
+
+	if err := viper.BindPFlag(constants.CaptureAllDNS, cmd.Flags().Lookup(constants.CaptureAllDNS)); err != nil {
+		handleError(err)
+	}
+	viper.SetDefault(constants.CaptureAllDNS, false)
+
+	if err := viper.BindPFlag(constants.OutputPath, cmd.Flags().Lookup(constants.OutputPath)); err != nil {
+		handleError(err)
+	}
+	viper.SetDefault(constants.OutputPath, "")
+
+	if err := viper.BindPFlag(constants.NetworkNamespace, cmd.Flags().Lookup(constants.NetworkNamespace)); err != nil {
+		handleError(err)
+	}
+	viper.SetDefault(constants.NetworkNamespace, "")
+
+	if err := viper.BindPFlag(constants.CNIMode, cmd.Flags().Lookup(constants.CNIMode)); err != nil {
+		handleError(err)
+	}
+	viper.SetDefault(constants.CNIMode, false)
 }
 
 // https://github.com/spf13/viper/issues/233.
@@ -310,7 +345,10 @@ func init() {
 
 	rootCmd.Flags().StringP(constants.LocalExcludePorts, "d", "",
 		"Comma separated list of inbound ports to be excluded from redirection to Envoy (optional). "+
-			"Only applies  when all inbound traffic (i.e. \"*\") is being redirected (default to $ISTIO_LOCAL_EXCLUDE_PORTS)")
+			"Only applies when all inbound traffic (i.e. \"*\") is being redirected (default to $ISTIO_LOCAL_EXCLUDE_PORTS)")
+
+	rootCmd.Flags().StringP(constants.ExcludeInterfaces, "", "",
+		"Comma separated list of NIC (optional). Neither inbound nor outbound traffic will be captured")
 
 	rootCmd.Flags().StringP(constants.ServiceCidr, "i", "",
 		"Comma separated list of IP ranges in CIDR form to redirect to envoy (optional). "+
@@ -346,6 +384,15 @@ func init() {
 	rootCmd.Flags().Bool(constants.RunValidation, false, "Validate iptables")
 
 	rootCmd.Flags().Bool(constants.RedirectDNS, dnsCaptureByAgent, "Enable capture of dns traffic by istio-agent")
+
+	rootCmd.Flags().Bool(constants.CaptureAllDNS, false,
+		"Instead of only capturing DNS traffic to DNS server IP, capture all DNS traffic at port 53. This setting is only effective when redirect dns is enabled.")
+
+	rootCmd.Flags().String(constants.OutputPath, "", "A file path to write the applied iptables rules to.")
+
+	rootCmd.Flags().String(constants.NetworkNamespace, "", "The network namespace that iptables rules should be applied to.")
+
+	rootCmd.Flags().Bool(constants.CNIMode, false, "Whether to run as CNI plugin.")
 }
 
 func GetCommand() *cobra.Command {

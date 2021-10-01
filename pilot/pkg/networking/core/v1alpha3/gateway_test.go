@@ -25,6 +25,7 @@ import (
 	hcm "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
 	auth "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/durationpb"
 
@@ -549,7 +550,8 @@ func TestCreateGatewayHTTPFilterChainOpts(t *testing.T) {
 						HttpProtocolOptions: &core.Http1ProtocolOptions{
 							AcceptHttp_10: true,
 						},
-						StripPortMode: stripPortMode,
+						StripPortMode:       stripPortMode,
+						DelayedCloseTimeout: features.DelayedCloseTimeout,
 					},
 				},
 			},
@@ -640,6 +642,7 @@ func TestCreateGatewayHTTPFilterChainOpts(t *testing.T) {
 						ServerName:          EnvoyServerName,
 						HttpProtocolOptions: &core.Http1ProtocolOptions{},
 						StripPortMode:       stripPortMode,
+						DelayedCloseTimeout: features.DelayedCloseTimeout,
 					},
 				},
 			},
@@ -730,6 +733,7 @@ func TestCreateGatewayHTTPFilterChainOpts(t *testing.T) {
 						ServerName:          EnvoyServerName,
 						HttpProtocolOptions: &core.Http1ProtocolOptions{},
 						StripPortMode:       stripPortMode,
+						DelayedCloseTimeout: features.DelayedCloseTimeout,
 					},
 				},
 			},
@@ -820,6 +824,7 @@ func TestCreateGatewayHTTPFilterChainOpts(t *testing.T) {
 						ServerName:          EnvoyServerName,
 						HttpProtocolOptions: &core.Http1ProtocolOptions{},
 						StripPortMode:       stripPortMode,
+						DelayedCloseTimeout: features.DelayedCloseTimeout,
 					},
 				},
 			},
@@ -855,6 +860,7 @@ func TestCreateGatewayHTTPFilterChainOpts(t *testing.T) {
 						ServerName:          EnvoyServerName,
 						HttpProtocolOptions: &core.Http1ProtocolOptions{},
 						StripPortMode:       stripPortMode,
+						DelayedCloseTimeout: features.DelayedCloseTimeout,
 					},
 				},
 			},
@@ -950,6 +956,7 @@ func TestCreateGatewayHTTPFilterChainOpts(t *testing.T) {
 						ServerName:          EnvoyServerName,
 						HttpProtocolOptions: &core.Http1ProtocolOptions{},
 						StripPortMode:       stripPortMode,
+						DelayedCloseTimeout: features.DelayedCloseTimeout,
 					},
 				},
 			},
@@ -1046,6 +1053,7 @@ func TestCreateGatewayHTTPFilterChainOpts(t *testing.T) {
 						ServerName:          EnvoyServerName,
 						HttpProtocolOptions: &core.Http1ProtocolOptions{},
 						StripPortMode:       stripPortMode,
+						DelayedCloseTimeout: features.DelayedCloseTimeout,
 					},
 					statPrefix: "server1",
 				},
@@ -1074,7 +1082,7 @@ func TestCreateGatewayHTTPFilterChainOpts(t *testing.T) {
 }
 
 func TestGatewayHTTPRouteConfig(t *testing.T) {
-	httpsRedirectGateway := config.Config{
+	httpRedirectGateway := config.Config{
 		Meta: config.Meta{
 			Name:             "gateway-redirect",
 			Namespace:        "default",
@@ -1091,7 +1099,7 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 			},
 		},
 	}
-	httpsRedirectGatewayWithoutVS := config.Config{
+	httpRedirectGatewayWithoutVS := config.Config{
 		Meta: config.Meta{
 			Name:             "gateway-redirect-noroutes",
 			Namespace:        "default",
@@ -1120,6 +1128,50 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 				{
 					Hosts: []string{"example.org"},
 					Port:  &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+				},
+			},
+		},
+	}
+	httpsGateway := config.Config{
+		Meta: config.Meta{
+			Name:             "gateway-https",
+			Namespace:        "default",
+			GroupVersionKind: gvk.Gateway,
+		},
+		Spec: &networking.Gateway{
+			Selector: map[string]string{"istio": "ingressgateway"},
+			Servers: []*networking.Server{
+				{
+					Hosts: []string{"example.org"},
+					Port:  &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+					Tls:   &networking.ServerTLSSettings{HttpsRedirect: true},
+				},
+				{
+					Hosts: []string{"example.org"},
+					Port:  &networking.Port{Name: "https", Number: 443, Protocol: "HTTPS"},
+					Tls:   &networking.ServerTLSSettings{Mode: networking.ServerTLSSettings_TLSmode(networking.ClientTLSSettings_SIMPLE)},
+				},
+			},
+		},
+	}
+	httpsGatewayRedirect := config.Config{
+		Meta: config.Meta{
+			Name:             "gateway-https",
+			Namespace:        "default",
+			GroupVersionKind: gvk.Gateway,
+		},
+		Spec: &networking.Gateway{
+			Selector: map[string]string{"istio": "ingressgateway"},
+			Servers: []*networking.Server{
+				{
+					Hosts: []string{"example.org"},
+					Port:  &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+					Tls:   &networking.ServerTLSSettings{HttpsRedirect: true},
+				},
+				{
+					Hosts: []string{"example.org"},
+					Port:  &networking.Port{Name: "https", Number: 443, Protocol: "HTTPS"},
+					Tls:   &networking.ServerTLSSettings{HttpsRedirect: true, Mode: networking.ServerTLSSettings_TLSmode(networking.ClientTLSSettings_SIMPLE)},
 				},
 			},
 		},
@@ -1158,6 +1210,29 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 			},
 		},
 	}
+	virtualServiceHTTPSMatchSpec := &networking.VirtualService{
+		Hosts:    []string{"example.org"},
+		Gateways: []string{"gateway-https"},
+		Http: []*networking.HTTPRoute{
+			{
+				Match: []*networking.HTTPMatchRequest{
+					{
+						Port: 443,
+					},
+				},
+				Route: []*networking.HTTPRouteDestination{
+					{
+						Destination: &networking.Destination{
+							Host: "example.default.svc.cluster.local",
+							Port: &networking.PortSelector{
+								Number: 8080,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 	virtualService := config.Config{
 		Meta: config.Meta{
 			GroupVersionKind: gvk.VirtualService,
@@ -1165,6 +1240,14 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 			Namespace:        "default",
 		},
 		Spec: virtualServiceSpec,
+	}
+	virtualServiceHTTPS := config.Config{
+		Meta: config.Meta{
+			GroupVersionKind: gvk.VirtualService,
+			Name:             "virtual-service-https",
+			Namespace:        "default",
+		},
+		Spec: virtualServiceHTTPSMatchSpec,
 	}
 	virtualServiceCopy := config.Config{
 		Meta: config.Meta{
@@ -1230,7 +1313,7 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 		{
 			"tls redirect without virtual services",
 			[]config.Config{virtualService},
-			[]config.Config{httpsRedirectGatewayWithoutVS},
+			[]config.Config{httpRedirectGatewayWithoutVS},
 			"http.80",
 			map[string][]string{
 				"example.org:80": {
@@ -1247,7 +1330,7 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 		{
 			"virtual services with tls redirect",
 			[]config.Config{virtualService},
-			[]config.Config{httpsRedirectGateway},
+			[]config.Config{httpRedirectGateway},
 			"http.80",
 			map[string][]string{
 				"example.org:80": {
@@ -1263,7 +1346,7 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 		{
 			"merging of virtual services when tls redirect is set",
 			[]config.Config{virtualService, virtualServiceCopy},
-			[]config.Config{httpsRedirectGateway, httpGateway},
+			[]config.Config{httpRedirectGateway, httpGateway},
 			"http.80",
 			map[string][]string{
 				"example.org:80": {
@@ -1279,7 +1362,7 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 		{
 			"reverse merging of virtual services when tls redirect is set",
 			[]config.Config{virtualService, virtualServiceCopy},
-			[]config.Config{httpGateway, httpsRedirectGateway},
+			[]config.Config{httpGateway, httpRedirectGateway},
 			"http.80",
 			map[string][]string{
 				"example.org:80": {
@@ -1295,7 +1378,7 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 		{
 			"merging of virtual services when tls redirect is set without VS",
 			[]config.Config{virtualService, virtualServiceCopy},
-			[]config.Config{httpGateway, httpsRedirectGatewayWithoutVS},
+			[]config.Config{httpGateway, httpRedirectGatewayWithoutVS},
 			"http.80",
 			map[string][]string{
 				"example.org:80": {
@@ -1311,7 +1394,7 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 		{
 			"reverse merging of virtual services when tls redirect is set without VS",
 			[]config.Config{virtualService, virtualServiceCopy},
-			[]config.Config{httpsRedirectGatewayWithoutVS, httpGateway},
+			[]config.Config{httpRedirectGatewayWithoutVS, httpGateway},
 			"http.80",
 			map[string][]string{
 				"example.org:80": {
@@ -1386,9 +1469,71 @@ func TestGatewayHTTPRouteConfig(t *testing.T) {
 			map[string]int{"*.org:80": 1},
 			false,
 		},
+		{
+			"http redirection not working when virtualservice not match http port",
+			[]config.Config{virtualServiceHTTPS},
+			[]config.Config{httpsGateway},
+			"https.443.https.gateway-https.default",
+			map[string][]string{
+				"example.org:443": {"example.org", "example.org:*"},
+			},
+			map[string][]string{
+				"example.org:443": {"example.org"},
+			},
+			map[string]int{"example.org:443": 1},
+			false,
+		},
+		{
+			"http redirection not working when virtualservice not match http port",
+			[]config.Config{virtualServiceHTTPS},
+			[]config.Config{httpsGateway},
+			"http.80",
+			map[string][]string{
+				"example.org:80": {"example.org", "example.org:*"},
+			},
+			map[string][]string{
+				"example.org:80": {"example.org"},
+			},
+			// We will setup a VHost which just redirects; no routes
+			map[string]int{"example.org:80": 0},
+			true,
+		},
+		{
+			"http & https redirection not working when virtualservice not match http port",
+			[]config.Config{virtualServiceHTTPS},
+			[]config.Config{httpsGatewayRedirect},
+			"https.443.https.gateway-https.default",
+			map[string][]string{
+				"example.org:443": {"example.org", "example.org:*"},
+			},
+			map[string][]string{
+				"example.org:443": {"example.org"},
+			},
+			map[string]int{"example.org:443": 1},
+			true,
+		},
+		{
+			"http & https redirection not working when virtualservice not match http port",
+			[]config.Config{virtualServiceHTTPS},
+			[]config.Config{httpsGatewayRedirect},
+			"http.80",
+			map[string][]string{
+				"example.org:80": {"example.org", "example.org:*"},
+			},
+			map[string][]string{
+				"example.org:80": {"example.org"},
+			},
+			// We will setup a VHost which just redirects; no routes
+			map[string]int{"example.org:80": 0},
+			true,
+		},
 	}
 
 	StripHostPort := []bool{false, true}
+	oldValue := features.StripHostPort
+	t.Cleanup(func() {
+		features.StripHostPort = oldValue
+	})
 	for _, value := range StripHostPort {
 		features.StripHostPort = value
 		for _, tt := range cases {
@@ -1436,7 +1581,8 @@ func TestBuildGatewayListeners(t *testing.T) {
 	cases := []struct {
 		name              string
 		node              *pilot_model.Proxy
-		gateway           *networking.Gateway
+		gateways          []config.Config
+		virtualServices   []config.Config
 		expectedListeners []string
 	}{
 		{
@@ -1456,28 +1602,40 @@ func TestBuildGatewayListeners(t *testing.T) {
 					},
 				},
 			},
-			&networking.Gateway{
-				Servers: []*networking.Server{
-					{
-						Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: uuid.NewString(), Namespace: uuid.NewString(), GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+							},
+						},
 					},
 				},
 			},
+			nil,
 			[]string{"0.0.0.0_8080"},
 		},
 		{
 			"multiple ports",
 			&pilot_model.Proxy{},
-			&networking.Gateway{
-				Servers: []*networking.Server{
-					{
-						Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
-					},
-					{
-						Port: &networking.Port{Name: "http", Number: 801, Protocol: "HTTP"},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: uuid.NewString(), Namespace: uuid.NewString(), GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+							},
+							{
+								Port: &networking.Port{Name: "http", Number: 801, Protocol: "HTTP"},
+							},
+						},
 					},
 				},
 			},
+			nil,
 			[]string{"0.0.0.0_80", "0.0.0.0_801"},
 		},
 		{
@@ -1487,76 +1645,279 @@ func TestBuildGatewayListeners(t *testing.T) {
 					UnprivilegedPod: "true",
 				},
 			},
-			&networking.Gateway{
-				Servers: []*networking.Server{
-					{
-						Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
-					},
-					{
-						Port: &networking.Port{Name: "http", Number: 8080, Protocol: "HTTP"},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: uuid.NewString(), Namespace: uuid.NewString(), GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+							},
+							{
+								Port: &networking.Port{Name: "http", Number: 8080, Protocol: "HTTP"},
+							},
+						},
 					},
 				},
 			},
+			nil,
 			[]string{"0.0.0.0_8080"},
 		},
 		{
 			"privileged port on privileged pod",
 			&pilot_model.Proxy{},
-			&networking.Gateway{
-				Servers: []*networking.Server{
-					{
-						Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
-					},
-					{
-						Port: &networking.Port{Name: "http", Number: 8080, Protocol: "HTTP"},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: uuid.NewString(), Namespace: uuid.NewString(), GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+							},
+							{
+								Port: &networking.Port{Name: "http", Number: 8080, Protocol: "HTTP"},
+							},
+						},
 					},
 				},
 			},
+			nil,
 			[]string{"0.0.0.0_80", "0.0.0.0_8080"},
 		},
 		{
 			"gateway with bind",
 			&pilot_model.Proxy{},
-			&networking.Gateway{
-				Servers: []*networking.Server{
-					{
-						Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
-					},
-					{
-						Port:  &networking.Port{Name: "http", Number: 8080, Protocol: "HTTP"},
-						Hosts: []string{"externalgatewayclient.com"},
-					},
-					{
-						Port:  &networking.Port{Name: "http", Number: 8080, Protocol: "HTTP"},
-						Bind:  "127.0.0.1",
-						Hosts: []string{"internalmesh.svc.cluster.local"},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: uuid.NewString(), Namespace: uuid.NewString(), GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port: &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+							},
+							{
+								Port:  &networking.Port{Name: "http", Number: 8080, Protocol: "HTTP"},
+								Hosts: []string{"externalgatewayclient.com"},
+							},
+							{
+								Port:  &networking.Port{Name: "http", Number: 8080, Protocol: "HTTP"},
+								Bind:  "127.0.0.1",
+								Hosts: []string{"internalmesh.svc.cluster.local"},
+							},
+						},
 					},
 				},
 			},
+			nil,
 			[]string{"0.0.0.0_80", "0.0.0.0_8080", "127.0.0.1_8080"},
+		},
+		{
+			"gateway with simple and passthrough",
+			&pilot_model.Proxy{},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: uuid.NewString(), Namespace: uuid.NewString(), GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port:  &networking.Port{Name: "http", Number: 443, Protocol: "HTTPS"},
+								Hosts: []string{"*.example.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_SIMPLE},
+							},
+							{
+								Port:  &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+								Hosts: []string{"foo.example.com"},
+							},
+						},
+					},
+				},
+				{
+					Meta: config.Meta{Name: "passthrough-gateway", Namespace: "testns", GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port:  &networking.Port{Name: "http", Number: 443, Protocol: "HTTPS"},
+								Hosts: []string{"*.example.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_SIMPLE},
+							},
+							{
+								Port:  &networking.Port{Name: "tcp", Number: 9443, Protocol: "TLS"},
+								Hosts: []string{"barone.example.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_PASSTHROUGH},
+							},
+							{
+								Port:  &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+								Hosts: []string{"bar.example.com"},
+							},
+						},
+					},
+				},
+			},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: uuid.NewString(), Namespace: uuid.NewString(), GroupVersionKind: gvk.VirtualService},
+					Spec: &networking.VirtualService{
+						Gateways: []string{"testns/passthrough-gateway"},
+						Hosts:    []string{"barone.example.com"},
+						Tls: []*networking.TLSRoute{
+							{
+								Match: []*networking.TLSMatchAttributes{
+									{
+										Port:     9443,
+										SniHosts: []string{"barone.example.com"},
+									},
+								},
+								Route: []*networking.RouteDestination{
+									{
+										Destination: &networking.Destination{
+											Host: "foo.com",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			[]string{"0.0.0.0_443", "0.0.0.0_80", "0.0.0.0_9443"},
+		},
+		{
+			"gateway with multiple http servers",
+			&pilot_model.Proxy{},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: "gateway1", Namespace: "testns", GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port:  &networking.Port{Name: "http", Number: 443, Protocol: "HTTPS"},
+								Hosts: []string{"*.example.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_SIMPLE},
+							},
+							{
+								Port:  &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+								Hosts: []string{"foo.example.com"},
+							},
+						},
+					},
+				},
+				{
+					Meta: config.Meta{Name: "gateway2", Namespace: "testns", GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port:  &networking.Port{Name: "http", Number: 443, Protocol: "HTTPS"},
+								Hosts: []string{"*.exampleone.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_SIMPLE},
+							},
+							{
+								Port:  &networking.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+								Hosts: []string{"bar.example.com"},
+							},
+						},
+					},
+				},
+			},
+			nil,
+			[]string{"0.0.0.0_443", "0.0.0.0_80"},
+		},
+		{
+			"gateway with multiple TLS HTTPS TCP servers",
+			&pilot_model.Proxy{},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: "gateway1", Namespace: "testns", GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port:  &networking.Port{Name: "tcp", Number: 443, Protocol: "TLS"},
+								Hosts: []string{"*.example.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_SIMPLE},
+							},
+							{
+								Port:  &networking.Port{Name: "tcp", Number: 443, Protocol: "HTTPS"},
+								Hosts: []string{"https.example.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_SIMPLE},
+							},
+							{
+								Port:  &networking.Port{Name: "tcp", Number: 9443, Protocol: "TCP"},
+								Hosts: []string{"tcp.example.com"},
+							},
+						},
+					},
+				},
+				{
+					Meta: config.Meta{Name: "gateway2", Namespace: "testns", GroupVersionKind: gvk.Gateway},
+					Spec: &networking.Gateway{
+						Servers: []*networking.Server{
+							{
+								Port:  &networking.Port{Name: "http", Number: 443, Protocol: "HTTPS"},
+								Hosts: []string{"*.exampleone.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_SIMPLE},
+							},
+							{
+								Port:  &networking.Port{Name: "tcp", Number: 443, Protocol: "TLS"},
+								Hosts: []string{"*.exampleone.com"},
+								Tls:   &networking.ServerTLSSettings{CredentialName: "test", Mode: networking.ServerTLSSettings_SIMPLE},
+							},
+						},
+					},
+				},
+			},
+			[]config.Config{
+				{
+					Meta: config.Meta{Name: uuid.NewString(), Namespace: uuid.NewString(), GroupVersionKind: gvk.VirtualService},
+					Spec: &networking.VirtualService{
+						Gateways: []string{"testns/gateway1"},
+						Hosts:    []string{"tcp.example.com"},
+						Tcp: []*networking.TCPRoute{
+							{
+								Match: []*networking.L4MatchAttributes{
+									{
+										Port: 9443,
+									},
+								},
+								Route: []*networking.RouteDestination{
+									{
+										Destination: &networking.Destination{
+											Host: "foo.com",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			[]string{"0.0.0.0_443", "0.0.0.0_9443"},
 		},
 	}
 
 	for _, tt := range cases {
-		cg := NewConfigGenTest(t, TestOptions{
-			Configs: []config.Config{{Meta: config.Meta{GroupVersionKind: gvk.Gateway}, Spec: tt.gateway}},
-		})
-		proxy := cg.SetupProxy(&proxyGateway)
-		proxy.ServiceInstances = tt.node.ServiceInstances
-		if tt.node.Metadata != nil {
-			proxy.Metadata = tt.node.Metadata
-		} else {
-			proxy.Metadata = &proxyGatewayMetadata
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			Configs := make([]config.Config, 0)
+			Configs = append(Configs, tt.gateways...)
+			Configs = append(Configs, tt.virtualServices...)
+			cg := NewConfigGenTest(t, TestOptions{
+				Configs: Configs,
+			})
+			cg.MemRegistry.WantGetProxyServiceInstances = tt.node.ServiceInstances
+			proxy := cg.SetupProxy(&proxyGateway)
+			if tt.node.Metadata != nil {
+				proxy.Metadata = tt.node.Metadata
+			} else {
+				proxy.Metadata = &proxyGatewayMetadata
+			}
 
-		builder := cg.ConfigGen.buildGatewayListeners(&ListenerBuilder{node: proxy, push: cg.PushContext()})
-		listeners := xdstest.ExtractListenerNames(builder.gatewayListeners)
-		sort.Strings(listeners)
-		sort.Strings(tt.expectedListeners)
-		if !reflect.DeepEqual(listeners, tt.expectedListeners) {
-			t.Fatalf("Expected listeners: %v, got: %v\n%v", tt.expectedListeners, listeners, proxyGateway.MergedGateway.MergedServers)
-		}
-		xdstest.ValidateListeners(t, builder.gatewayListeners)
+			builder := cg.ConfigGen.buildGatewayListeners(&ListenerBuilder{node: proxy, push: cg.PushContext()})
+			listeners := xdstest.ExtractListenerNames(builder.gatewayListeners)
+			sort.Strings(listeners)
+			sort.Strings(tt.expectedListeners)
+			if !reflect.DeepEqual(listeners, tt.expectedListeners) {
+				t.Fatalf("Expected listeners: %v, got: %v\n%v", tt.expectedListeners, listeners, proxyGateway.MergedGateway.MergedServers)
+			}
+			xdstest.ValidateListeners(t, builder.gatewayListeners)
+		})
 	}
 }
 

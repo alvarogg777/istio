@@ -84,15 +84,6 @@ func amendFilterChainMatchFromInboundListener(chain *listener.FilterChain, l *li
 	listenerAddress := l.Address
 	if sockAddr := listenerAddress.GetSocketAddress(); sockAddr != nil {
 		chain.FilterChainMatch.DestinationPort = &wrappers.UInt32Value{Value: sockAddr.GetPortValue()}
-		if cidr := util.ConvertAddressToCidr(sockAddr.GetAddress()); cidr != nil {
-			if chain.FilterChainMatch.PrefixRanges != nil && len(chain.FilterChainMatch.PrefixRanges) != 1 {
-				log.Debugf("Intercepted inbound listener %s have neither 0 or 1 prefix ranges. Actual:  %d",
-					l.Name, len(chain.FilterChainMatch.PrefixRanges))
-			}
-			if sockAddr.Address != WildcardAddress && sockAddr.Address != WildcardIPv6Address {
-				chain.FilterChainMatch.PrefixRanges = []*core.CidrRange{util.ConvertAddressToCidr(sockAddr.GetAddress())}
-			}
-		}
 		chain.Name = l.Name
 	}
 
@@ -387,14 +378,14 @@ func (lb *ListenerBuilder) buildVirtualOutboundListener(configgen *ConfigGenerat
 
 	// add an extra listener that binds to the port that is the recipient of the iptables redirect
 	ipTablesListener := &listener.Listener{
-		Name:             VirtualOutboundListenerName,
+		Name:             model.VirtualOutboundListenerName,
 		Address:          util.BuildAddress(actualWildcard, uint32(lb.push.Mesh.ProxyListenPort)),
 		Transparent:      isTransparentProxy,
 		UseOriginalDst:   proto.BoolTrue,
 		FilterChains:     filterChains,
 		TrafficDirection: core.TrafficDirection_OUTBOUND,
 	}
-	accessLogBuilder.setListenerAccessLog(lb.push.Mesh, ipTablesListener, lb.node)
+	accessLogBuilder.setListenerAccessLog(lb.push, lb.node, ipTablesListener)
 	lb.virtualOutboundListener = ipTablesListener
 	return lb
 }
@@ -411,14 +402,14 @@ func (lb *ListenerBuilder) buildVirtualInboundListener(configgen *ConfigGenerato
 	// add an extra listener that binds to the port that is the recipient of the iptables redirect
 	filterChains, passthroughInspector := buildInboundCatchAllFilterChains(configgen, lb.node, lb.push)
 	lb.virtualInboundListener = &listener.Listener{
-		Name:             VirtualInboundListenerName,
+		Name:             model.VirtualInboundListenerName,
 		Address:          util.BuildAddress(actualWildcard, ProxyInboundListenPort),
 		Transparent:      isTransparentProxy,
 		UseOriginalDst:   proto.BoolTrue,
 		TrafficDirection: core.TrafficDirection_INBOUND,
 		FilterChains:     filterChains,
 	}
-	accessLogBuilder.setListenerAccessLog(lb.push.Mesh, lb.virtualInboundListener, lb.node)
+	accessLogBuilder.setListenerAccessLog(lb.push, lb.node, lb.virtualInboundListener)
 	lb.aggregateVirtualInboundListener(passthroughInspector)
 
 	return lb
@@ -500,30 +491,6 @@ func (lb *ListenerBuilder) getListeners() []*listener.Listener {
 	return lb.gatewayListeners
 }
 
-type fcOpts struct {
-	matchOpts FilterChainMatchOptions
-	fc        istionetworking.FilterChain
-}
-
-func (opt fcOpts) populateFilterChain(mtls plugin.MTLSSettings, port uint32, matchingIP string) fcOpts {
-	opt.fc.FilterChainMatch = &listener.FilterChainMatch{}
-	opt.fc.FilterChainMatch.ApplicationProtocols = opt.matchOpts.ApplicationProtocols
-	opt.fc.FilterChainMatch.TransportProtocol = opt.matchOpts.TransportProtocol
-	if len(matchingIP) > 0 {
-		opt.fc.FilterChainMatch.PrefixRanges = []*core.CidrRange{util.ConvertAddressToCidr(matchingIP)}
-	}
-	if port > 0 {
-		opt.fc.FilterChainMatch.DestinationPort = &wrappers.UInt32Value{Value: port}
-	}
-	opt.fc.ListenerProtocol = opt.matchOpts.Protocol
-	if opt.fc.ListenerProtocol == istionetworking.ListenerProtocolHTTP {
-		opt.fc.TLSContext = mtls.HTTP
-	} else {
-		opt.fc.TLSContext = mtls.TCP
-	}
-	return opt
-}
-
 func getMtlsSettings(configgen *ConfigGeneratorImpl, in *plugin.InputParams, passthrough bool) []plugin.MTLSSettings {
 	for _, p := range configgen.Plugins {
 		cfg := p.InboundMTLSConfiguration(in, passthrough)
@@ -556,7 +523,7 @@ func buildInboundCatchAllFilterChains(configgen *ConfigGeneratorImpl,
 	// exact, just best effort optimization
 	filterChains := make([]*listener.FilterChain, 0, 1+5*len(ipVersions))
 	filterChains = append(filterChains, &listener.FilterChain{
-		Name: VirtualInboundBlackholeFilterChainName,
+		Name: model.VirtualInboundBlackholeFilterChainName,
 		FilterChainMatch: &listener.FilterChainMatch{
 			DestinationPort: &wrappers.UInt32Value{Value: ProxyInboundListenPort},
 		},
@@ -678,14 +645,14 @@ func (configgen *ConfigGeneratorImpl) buildInboundFilterchains(in *plugin.InputP
 		case istionetworking.ListenerProtocolHTTP:
 			fcOpt.httpOpts = configgen.buildSidecarInboundHTTPListenerOptsForPortOrUDS(in.Node, in, clusterName)
 		case istionetworking.ListenerProtocolTCP:
-			fcOpt.networkFilters = buildInboundNetworkFilters(in.Push, in.ServiceInstance, in.Node, clusterName)
+			fcOpt.networkFilters = buildInboundNetworkFilters(in.Push, in.ServiceInstance, clusterName)
 		case istionetworking.ListenerProtocolAuto:
 			fcOpt.httpOpts = configgen.buildSidecarInboundHTTPListenerOptsForPortOrUDS(in.Node, in, clusterName)
-			fcOpt.networkFilters = buildInboundNetworkFilters(in.Push, in.ServiceInstance, in.Node, clusterName)
+			fcOpt.networkFilters = buildInboundNetworkFilters(in.Push, in.ServiceInstance, clusterName)
 		}
-		fcOpt.filterChainName = VirtualInboundListenerName
+		fcOpt.filterChainName = model.VirtualInboundListenerName
 		if opt.fc.ListenerProtocol == istionetworking.ListenerProtocolHTTP {
-			fcOpt.filterChainName = virtualInboundCatchAllHTTPFilterChainName
+			fcOpt.filterChainName = model.VirtualInboundCatchAllHTTPFilterChainName
 		}
 		fcOpt.filterChain = opt.fc
 		fcOpts = append(fcOpts, fcOpt)
@@ -716,7 +683,7 @@ func buildOutboundCatchAllNetworkFiltersOnly(push *model.PushContext, node *mode
 		StatPrefix:       egressCluster,
 		ClusterSpecifier: &tcp.TcpProxy_Cluster{Cluster: egressCluster},
 	}
-	accessLogBuilder.setTCPAccessLog(push.Mesh, tcpProxy, node)
+	accessLogBuilder.setTCPAccessLog(push.Mesh, tcpProxy)
 	filterStack = append(filterStack, &listener.Filter{
 		Name:       wellknown.TCPProxy,
 		ConfigType: &listener.Filter_TypedConfig{TypedConfig: util.MessageToAny(tcpProxy)},
@@ -734,7 +701,7 @@ func buildOutboundCatchAllNetworkFilterChains(_ *ConfigGeneratorImpl,
 	filterStack := buildOutboundCatchAllNetworkFiltersOnly(push, node)
 	chains := make([]*listener.FilterChain, 0, 2)
 	chains = append(chains, blackholeFilterChain(push.Mesh.ProxyListenPort), &listener.FilterChain{
-		Name:    VirtualOutboundCatchAllTCPFilterChainName,
+		Name:    model.VirtualOutboundCatchAllTCPFilterChainName,
 		Filters: filterStack,
 	})
 	return chains
@@ -742,7 +709,7 @@ func buildOutboundCatchAllNetworkFilterChains(_ *ConfigGeneratorImpl,
 
 func blackholeFilterChain(proxyListenPort int32) *listener.FilterChain {
 	return &listener.FilterChain{
-		Name: VirtualOutboundBlackholeFilterChainName,
+		Name: model.VirtualOutboundBlackholeFilterChainName,
 		FilterChainMatch: &listener.FilterChainMatch{
 			// We should not allow requests to the listen port directly. Requests must be
 			// sent to some other original port and iptables redirected to 15001. This
