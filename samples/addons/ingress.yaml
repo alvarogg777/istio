@@ -17,16 +17,16 @@ spec:
             name: grafana
             port:
               number: 3000
-  - host: tracing.alboroto.live
+  - host: jaeger.alboroto.live
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: zipkin
+            name: jaeger
             port:
-              number: 9411
+              number: 16686
   - host: prometheus.alboroto.live
     http:
       paths:
