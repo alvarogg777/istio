@@ -34,7 +34,10 @@ metadata:
 data:
   config.yaml: |
     auth:
-      openid: {}
+      openid:
+        client_id: "account"
+        client_secret: "b9a9a44e-360d-4816-aa11-0fd80f83ce8c"
+        issuer_uri: "https://kc.alboroto.live/auth/realms/alborotoproject/.well-known/openid-configuration"
       openshift:
         client_id_prefix: kiali
       strategy: anonymous
