@@ -86,12 +86,16 @@ data:
         url: http://grafana.alboroto.live
         in_cluster_url: "http://grafana.istio-system.svc.cluster.local:3000"
       tracing:
-        in_cluster_url: "http://tracing.istio-system.svc.cluster.local:16685"
+        in_cluster_url: "http://tracing.istio-system.svc.cluster.local:80"
         service: "tracing"
         url: http://tracing.alboroto.live
       prometheus:
         custom_metrics_url: http://prometheus-kube-state-metrics.istio-system.svc.cluster.local:8080
         url: http://prometheus-kube-state-metrics.istio-system.svc.cluster.local:8080
+        component_status:
+          app_label: "prometheus"
+          is_core: true
+          namespace: "istio-system"
     identity:
       cert_file: ""
       private_key_file: ""
