@@ -90,8 +90,8 @@ data:
         service: "tracing"
         url: http://tracing.alboroto.live
       prometheus:
-        custom_metrics_url: http://prometheus-kube-state-metrics.istio-system.svc.cluster.local:8080
-        url: http://prometheus-kube-state-metrics.istio-system.svc.cluster.local:8080
+        custom_metrics_url: http://prometheus.istio-system.svc.cluster.local:9090
+        url: http://prometheus.alboroto.live:9090
         component_status:
           app_label: "prometheus"
           is_core: true
