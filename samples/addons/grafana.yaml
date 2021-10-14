@@ -37,6 +37,15 @@ data:
     logs = /var/log/grafana
     plugins = /var/lib/grafana/plugins
     provisioning = /etc/grafana/provisioning
+    [auth.generic_oauth]
+    enabled = true
+    name = Oauth
+    allow_sign_up = false
+    client_id = account
+    client_secret = b9a9a44e-360d-4816-aa11-0fd80f83ce8c
+    auth_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/auth
+    token_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/token
+    api_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/userinfo
 
   datasources.yaml: |
     apiVersion: 1
