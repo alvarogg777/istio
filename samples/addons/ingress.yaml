@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: istio-system
@@ -13,32 +13,40 @@ spec:
       - path: /
         pathType: Prefix
         backend:
-          serviceName: grafana
-          servicePort: 3000
+          service:
+            name: grafana
+            port:
+              number: 3000
   - host: tracing.alboroto.live
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
-          serviceName: zipkin
-          servicePort: 9411
+          service:
+            name: zipkin
+            port:
+              number: 9411
   - host: prometheus.alboroto.live
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
-          serviceName: prometheus
-          servicePort: 9090
+          service:
+            name: prometheus
+            port:
+              number: 9090
   - host: kiali.alboroto.live
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
-          serviceName: kiali
-          servicePort: 20001
+          service:
+            name: kiali
+            port:
+              number: 20001
   # - host: auth.alboroto.live
   #   http:
   #     paths:
