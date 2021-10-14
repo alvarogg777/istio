@@ -1,0 +1,510 @@
+---
+# Source: selenium-grid/templates/event-bus-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: selenium-event-bus-config
+  labels:
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+data:
+  SE_EVENT_BUS_HOST: selenium-event-bus
+  SE_EVENT_BUS_PUBLISH_PORT: "4442"
+  SE_EVENT_BUS_SUBSCRIBE_PORT: "4443"
+---
+# Source: selenium-grid/templates/chrome-node-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-chrome-node
+  labels:
+    name: selenium-chrome-node
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  selector:
+    app: selenium-chrome-node
+  ports:
+    - name: tcp-chrome
+      protocol: TCP
+      port: 6900
+      targetPort: 5900
+---
+# Source: selenium-grid/templates/distributor-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-distributor
+  labels:
+    app: selenium-distributor
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  selector:
+    app: selenium-distributor
+  type: ClusterIP
+  ports:
+    - name: tcp-dist
+      protocol: TCP
+      port: 5553
+      targetPort: 5553
+---
+# Source: selenium-grid/templates/event-bus-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-event-bus
+  labels:
+    app: selenium-event-bus
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  selector:
+    app: selenium-event-bus
+  type: ClusterIP
+  ports:
+    - name: http-evtbus
+      protocol: TCP
+      port: 5557
+      targetPort: 5557
+    - name: tcp-evtbus-pub
+      protocol: TCP
+      port: 4442
+      targetPort: 4442
+    - name: tcp-evtbus-sub
+      protocol: TCP
+      port: 4443
+      targetPort: 4443
+---
+# Source: selenium-grid/templates/firefox-node-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-firefox-node
+  labels:
+    name: selenium-firefox-node
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  selector:
+    app: selenium-firefox-node
+  ports:
+    - name: tcp-firefox
+      protocol: TCP
+      port: 6900
+      targetPort: 5900
+---
+# Source: selenium-grid/templates/opera-node-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-opera-node
+  labels:
+    name: selenium-opera-node
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  selector:
+    app: selenium-opera-node
+  ports:
+    - name: tcp-opera
+      protocol: TCP
+      port: 6900
+      targetPort: 5900
+---
+# Source: selenium-grid/templates/router-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-router
+  labels:
+    app: selenium-router
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  selector:
+    app: selenium-router
+  type: NodePort
+  ports:
+    - name: tcp-router
+      protocol: TCP
+      port: 4444
+      targetPort: 4444
+---
+# Source: selenium-grid/templates/session-map-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-session-map
+  labels:
+    app: selenium-session-map
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  selector:
+    app: selenium-session-map
+  type: ClusterIP
+  ports:
+    - name: tcp-ssn-map
+      protocol: TCP
+      port: 5556
+      targetPort: 5556
+---
+# Source: selenium-grid/templates/session-queuer-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-session-queuer
+  labels:
+    app: selenium-session-queuer
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  selector:
+    app: selenium-session-queuer
+  type: ClusterIP
+  ports:
+    - name: tcp-ssn-que
+      protocol: TCP
+      port: 5559
+      targetPort: 5559
+---
+# Source: selenium-grid/templates/chrome-node-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-chrome-node
+  labels: &chrome_node_labels
+    app: selenium-chrome-node
+    app.kubernetes.io/name: selenium-chrome-node
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium-chrome-node
+  template:
+    metadata:
+      labels: *chrome_node_labels
+      annotations:
+        checksum/event-bus-configmap: 3e74d02da87de8f2c78a1f7a003822de18e13182488feb2103af61d649e52fa2
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: selenium-chrome-node
+          image: alvarogg777/node-chromium:4.0.0-20211013
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: selenium-event-bus-config
+          ports:
+            - containerPort: 5553
+              protocol: TCP
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: "1"
+              memory: 2Gi
+      volumes:
+        - name: dshm
+          emptyDir: { "medium": "Memory" }
+---
+# Source: selenium-grid/templates/distributor-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-distributor
+  labels: &distributor_labels
+    app: selenium-distributor
+    app.kubernetes.io/name: selenium-distributor
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium-distributor
+  template:
+    metadata:
+      labels: *distributor_labels
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: selenium-distributor
+          image: alvarogg777/distributor:4.0.0-20211013
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SE_SESSIONS_MAP_HOST
+              value: selenium-session-map
+            - name: SE_SESSIONS_MAP_PORT
+              value: "5556"
+            - name: SE_SESSION_QUEUER_HOST
+              value: selenium-session-queuer
+            - name: SE_SESSION_QUEUER_PORT
+              value: "5559"
+          envFrom:
+            - configMapRef:
+                name: selenium-event-bus-config
+          ports:
+            - containerPort: 5553
+              protocol: TCP
+---
+# Source: selenium-grid/templates/event-bus-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-event-bus
+  labels: &event_bus_labels
+    app: selenium-event-bus
+    app.kubernetes.io/name: selenium-event-bus
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium-event-bus
+  template:
+    metadata:
+      labels: *event_bus_labels
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: selenium-event-bus
+          image: alvarogg777/event-bus:4.0.0-20211013
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5557
+              protocol: TCP
+            - containerPort: 4442
+              protocol: TCP
+            - containerPort: 4443
+              protocol: TCP
+---
+# Source: selenium-grid/templates/firefox-node-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-firefox-node
+  labels: &firefox_node_labels
+    app: selenium-firefox-node
+    app.kubernetes.io/name: selenium-firefox-node
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium-firefox-node
+  template:
+    metadata:
+      labels: *firefox_node_labels
+      annotations:
+        checksum/event-bus-configmap: 3e74d02da87de8f2c78a1f7a003822de18e13182488feb2103af61d649e52fa2
+    spec:
+      imagePullSecrets: 
+        - name: regcred
+      containers:
+        - name: selenium-firefox-node
+          image: alvarogg777/node-firefox:4.0.0-20211013
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: selenium-event-bus-config
+          ports:
+            - containerPort: 5553
+              protocol: TCP
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: "1"
+              memory: 2Gi
+      volumes:
+        - name: dshm
+          emptyDir: { "medium": "Memory" }
+---
+# Source: selenium-grid/templates/router-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-router
+  labels: &router_labels
+    app: selenium-router
+    app.kubernetes.io/name: selenium-router
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium-router
+  template:
+    metadata:
+      labels: *router_labels
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: selenium-router
+          image: alvarogg777/router:4.0.0-20211013
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SE_DISTRIBUTOR_HOST
+              value: selenium-distributor
+            - name: SE_DISTRIBUTOR_PORT
+              value: "5553"
+            - name: SE_SESSIONS_MAP_HOST
+              value: selenium-session-map
+            - name: SE_SESSIONS_MAP_PORT
+              value: "5556"
+            - name: SE_SESSION_QUEUER_HOST
+              value: selenium-session-queuer
+            - name: SE_SESSION_QUEUER_PORT
+              value: "5559"
+          ports:
+            - containerPort: 4444
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 4444
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: 4444
+            initialDelaySeconds: 12
+            periodSeconds: 10
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 10
+---
+# Source: selenium-grid/templates/session-map-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-session-map
+  labels: &session_map_labels
+    app: selenium-session-map
+    app.kubernetes.io/name: selenium-session-map
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium-session-map
+  template:
+    metadata:
+      labels: *session_map_labels
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: selenium-session-map
+          image: alvarogg777/sessions:4.0.0-20211013
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: selenium-event-bus-config
+          ports:
+            - containerPort: 5556
+              protocol: TCP
+---
+# Source: selenium-grid/templates/session-queuer-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-session-queuer
+  labels: &session_queuer_labels
+    app: selenium-session-queuer
+    app.kubernetes.io/name: selenium-session-queuer
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/instance: selenium-grid
+    app.kubernetes.io/version: 4.0.0
+    app.kubernetes.io/component: selenium-grid-4.0.0
+    helm.sh/chart: selenium-grid-0.1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium-session-queuer
+  template:
+    metadata:
+      labels: *session_queuer_labels
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: selenium-session-queuer
+          image: alvarogg777/session-queue:4.0.0-20211013
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: selenium-event-bus-config
+          ports:
+            - containerPort: 5559
+              protocol: TCP
