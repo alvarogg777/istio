@@ -37,7 +37,11 @@ spec:
   hosts:
   - kiali.alboroto.live
   http:
-  - route:
+  - headers:
+      request:
+        set:
+          X-Forwarded-Port: "443"
+    route:
     - destination:
         host: kiali.istio-system.svc.cluster.local
         port:
