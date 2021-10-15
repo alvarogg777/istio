@@ -34,6 +34,7 @@ metadata:
 data:
   config.yaml: |
     auth:
+      strategy: openid
       openid:
         insecure_skip_verify_tls: true
         client_id: "kiali"
@@ -44,7 +45,6 @@ data:
         username_claim: "sub"
       #openshift:
       #  client_id_prefix: kiali
-      #strategy: anonymous
     deployment:
       accessible_namespaces:
       - '**'
