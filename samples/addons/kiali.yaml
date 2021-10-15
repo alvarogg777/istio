@@ -35,12 +35,16 @@ data:
   config.yaml: |
     auth:
       openid:
-        client_id: "account"
-        client_secret: "b9a9a44e-360d-4816-aa11-0fd80f83ce8c"
-        issuer_uri: "https://kc.alboroto.live/auth/realms/alborotoproject/.well-known/openid-configuration"
-      openshift:
-        client_id_prefix: kiali
-      strategy: anonymous
+        insecure_skip_verify_tls: true
+        client_id: "kiali"
+        disable_rbac: true
+        client_secret: "b09cf4f7-4482-46ef-993f-fac05f8e9e25"
+        issuer_uri: "https://kc.alboroto.live/auth/realms/alborotoproject"
+        scopes: ["openid"]
+        username_claim: "sub"
+      #openshift:
+      #  client_id_prefix: kiali
+      #strategy: anonymous
     deployment:
       accessible_namespaces:
       - '**'
