@@ -40,7 +40,7 @@ spec:
   - headers:
       request:
         set:
-          X-Forwarded-Port: "443"
+          X-Forwarded-Port: "80"
     route:
     - destination:
         host: kiali.istio-system.svc.cluster.local
