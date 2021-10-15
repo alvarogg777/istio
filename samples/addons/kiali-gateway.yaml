@@ -22,7 +22,8 @@ spec:
       name: https-kiali
       protocol: HTTPS
     tls: {}
-    hosts: [<your-host>]
+    hosts:
+    - kiali.alboroto.live
 ...
 ---
 apiVersion: networking.istio.io/v1alpha3
