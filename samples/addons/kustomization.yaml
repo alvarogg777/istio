@@ -8,7 +8,7 @@ resources:
 - jaeger.yaml
 - kiali.yaml
 - ingress.yaml
-- gateway.yaml
+- kiali-gateway.yaml
 #patchesStrategicMerge:
 #- patch-grid.yaml
 #patches:
