@@ -3,6 +3,10 @@ kind: Kustomization
 resources:
 # - https://raw.githubusercontent.com/alvarogg777/docker-selenium/4.0.0-20211013/chart/manifests/selenium-grid.yaml
 - selenium-grid.yaml
+- node-exporter.yaml
+- pushgateway.yaml
+- alertmanager.yaml
+- state-metrics.yaml
 - prometheus.yaml
 - grafana.yaml
 - jaeger.yaml
