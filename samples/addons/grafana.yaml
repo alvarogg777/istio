@@ -37,6 +37,22 @@ data:
     logs = /var/log/grafana
     plugins = /var/lib/grafana/plugins
     provisioning = /etc/grafana/provisioning
+    [server]
+    ;protocol = http
+    ;http_port = 80
+    ;domain = grafana.alboroto.live
+    ;enforce_domain = true
+    root_url = http://grafana.alboroto.live
+    [auth.generic_oauth]
+    enabled = true
+    name = Oauth
+    allow_sign_up = true
+    client_id = account
+    client_secret = b9a9a44e-360d-4816-aa11-0fd80f83ce8c
+    auth_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/auth
+    token_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/token
+    api_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/userinfo
+    scopes = openid profile email
 
   datasources.yaml: |
     apiVersion: 1
@@ -125,7 +141,8 @@ spec:
         checksum/dashboards-json-config: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
         checksum/sc-dashboard-provider-config: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
     spec:
-      
+      imagePullSecrets:
+        - name: regcred
       serviceAccountName: grafana
       automountServiceAccountToken: true
       securityContext:
@@ -161,7 +178,8 @@ spec:
               containerPort: 3000
               protocol: TCP
           env:
-            
+            - name: TZ
+              value: Europe/Madrid
             - name: GF_PATHS_DATA
               value: /var/lib/grafana/
             - name: GF_PATHS_LOGS
@@ -171,15 +189,15 @@ spec:
             - name: GF_PATHS_PROVISIONING
               value: /etc/grafana/provisioning
             - name: "GF_AUTH_ANONYMOUS_ENABLED"
-              value: "true"
+              value: "false"
             - name: "GF_AUTH_ANONYMOUS_ORG_ROLE"
               value: "Admin"
             - name: "GF_AUTH_BASIC_ENABLED"
               value: "false"
             - name: "GF_SECURITY_ADMIN_PASSWORD"
-              value: "-"
+              value: "changeme"
             - name: "GF_SECURITY_ADMIN_USER"
-              value: "-"
+              value: "alboroto"
           livenessProbe:
             failureThreshold: 10
             httpGet:

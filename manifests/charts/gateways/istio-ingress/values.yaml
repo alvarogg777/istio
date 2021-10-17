@@ -66,7 +66,7 @@ gateways:
       mountPath: /etc/istio/ingressgateway-ca-certs
 
     customService: false
-    externalTrafficPolicy: ""
+    externalTrafficPolicy: "Local"
 
     ingressPorts: []
     additionalContainers: []
@@ -156,10 +156,10 @@ global:
   # Default hub for Istio images.
   # Releases are published to docker hub under 'istio' project.
   # Dev builds from prow are on gcr.io
-  hub: gcr.io/istio-testing
+  hub: docker.io/querycapistio
 
   # Default tag for Istio images.
-  tag: latest
+  tag: 1.11.4
 
   # Specify image pull policy if default behavior isn't desired.
   # Default behavior: latest images will be Always else IfNotPresent.
@@ -170,7 +170,8 @@ global:
   # For components that don't use ServiceAccounts (i.e. grafana, servicegraph, tracing)
   # ImagePullSecrets will be added to the corresponding Deployment(StatefulSet) objects.
   # Must be set for any cluster configured with private docker registry.
-  imagePullSecrets: []
+  imagePullSecrets:
+  - name: regcred
   # - private-registry-key
 
   # To output all istio components logs in json format by adding --log_as_json argument to each container argument
@@ -185,6 +186,7 @@ global:
     amd64: 2
     s390x: 2
     ppc64le: 2
+    arm64: 2
 
   # Comma-separated minimum per-scope logging level of messages to output, in the form of <scope>:<level>,<scope>:<level>
   # The control plane has different scopes depending on component, but can configure default log level across all components

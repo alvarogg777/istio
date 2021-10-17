@@ -73,7 +73,6 @@ data:
     {
       "global": {
         "caAddress": "",
-        "caName": "",
         "configCluster": false,
         "defaultPodDisruptionBudget": {
           "enabled": true
@@ -84,9 +83,9 @@ data:
           }
         },
         "externalIstiod": false,
-        "hub": "docker.io/querycapistio",
+        "hub": "gcr.io/istio-testing",
         "imagePullPolicy": "",
-        "imagePullSecrets": "regcred",
+        "imagePullSecrets": [],
         "istioNamespace": "istio-system",
         "istiod": {
           "enableAnalysis": false
@@ -162,7 +161,7 @@ data:
         "sts": {
           "servicePort": 0
         },
-        "tag": "1.11.4",
+        "tag": "latest",
         "tracer": {
           "datadog": {
             "address": "$(HOST_IP):8126"
@@ -593,11 +592,6 @@ data:
             {{- end }}
           {{- end }}
             volumeMounts:
-            {{- if eq .Values.global.caName "GkeWorkloadCertificate" }}
-            - name: gke-workload-certificate
-              mountPath: /var/run/secrets/workload-spiffe-credentials
-              readOnly: true
-            {{- end }}
             {{- if eq .Values.global.pilotCertProvider "istiod" }}
             - mountPath: /var/run/secrets/istio
               name: istiod-ca-cert
@@ -635,11 +629,6 @@ data:
               {{ end }}
               {{- end }}
           volumes:
-          {{- if eq .Values.global.caName "GkeWorkloadCertificate" }}
-          - name: gke-workload-certificate
-            csi:
-              driver: workloadcertificates.security.cloud.google.com
-          {{- end }}
           {{- if (isset .ObjectMeta.Annotations `sidecar.istio.io/bootstrapOverride`) }}
           - name: custom-bootstrap-volume
             configMap:
@@ -841,11 +830,6 @@ data:
               timeoutSeconds: 3
               failureThreshold: {{ .Values.global.proxy.readinessFailureThreshold }}
             volumeMounts:
-            {{- if eq .Values.global.caName "GkeWorkloadCertificate" }}
-            - name: gke-workload-certificate
-              mountPath: /var/run/secrets/workload-spiffe-credentials
-              readOnly: true
-            {{- end }}
             {{- if eq .Values.global.pilotCertProvider "istiod" }}
             - mountPath: /var/run/secrets/istio
               name: istiod-ca-cert
@@ -868,11 +852,6 @@ data:
             - name: istio-podinfo
               mountPath: /etc/istio/pod
           volumes:
-          {{- if eq .Values.global.caName "GkeWorkloadCertificate" }}
-          - name: gke-workload-certificate
-            csi:
-              driver: workloadcertificates.security.cloud.google.com
-          {{- end }}
           # SDS channel between istioagent and Envoy
           - emptyDir:
               medium: Memory
@@ -1554,7 +1533,7 @@ spec:
         fsGroup: 1337
       containers:
         - name: discovery
-          image: "docker.io/querycapistio/pilot:1.11.4"
+          image: "gcr.io/istio-testing/pilot:latest"
           args:
           - "discovery"
           - --monitoringAddr=:15014
