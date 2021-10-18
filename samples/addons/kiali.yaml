@@ -90,9 +90,9 @@ data:
         url: http://grafana.alboroto.live
         in_cluster_url: "http://grafana.istio-system.svc.cluster.local:3000"
       tracing:
-        in_cluster_url: "http://jaeger.istio-system.svc.cluster.local:80"
-        service: "traecing"
-        url: http://jaeger.alboroto.live
+        in_cluster_url: "http://jaeger.istio-system.svc.cluster.local:80/jaeger"
+        service: "tracing"
+        url: http://jaeger.alboroto.live/jaeger
       prometheus:
         custom_metrics_url: http://prometheus.istio-system.svc.cluster.local:9090
         url: http://prometheus.alboroto.live
