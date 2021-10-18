@@ -86,9 +86,6 @@ spec:
             runAsGroup: 0
             runAsNonRoot: false
             privileged: true
-          env:
-            - name: TZ
-              value: Europe/Madrid
 {{- end }}
       containers:
         - name: istio-proxy

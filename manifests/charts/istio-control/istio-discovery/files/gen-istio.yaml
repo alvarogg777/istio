@@ -86,7 +86,7 @@ data:
         "externalIstiod": false,
         "hub": "docker.io/querycapistio",
         "imagePullPolicy": "",
-        "imagePullSecrets": "regcred",
+        "imagePullSecrets": ["regcred"],
         "istioNamespace": "istio-system",
         "istiod": {
           "enableAnalysis": false
