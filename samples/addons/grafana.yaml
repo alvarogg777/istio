@@ -48,7 +48,7 @@ data:
     name = Oauth
     allow_sign_up = true
     client_id = account
-    client_secret = b9a9a44e-360d-4816-aa11-0fd80f83ce8c
+    client_secret = b09cf4f7-4482-46ef-993f-fac05f8e9e25
     auth_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/auth
     token_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/token
     api_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/userinfo
