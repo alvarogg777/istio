@@ -46,7 +46,7 @@ data:
     [auth.generic_oauth]
     enabled = true
     name = Oauth
-    allow_sign_up = true
+    allow_sign_up = false
     client_id = account
     client_secret = b09cf4f7-4482-46ef-993f-fac05f8e9e25
     auth_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/auth
