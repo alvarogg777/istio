@@ -18,10 +18,14 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "14269"
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: jaeger
-          image: "docker.io/jaegertracing/all-in-one:1.23"
+          image: "docker.io/jaegertracing/all-in-one:1.28.0"
           env:
+            - name: TZ
+              value: Europe/Madrid
             - name: BADGER_EPHEMERAL
               value: "false"
             - name: SPAN_STORAGE_TYPE
@@ -57,7 +61,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tracing
+  name: jaeger # tracing
   namespace: istio-system
   labels:
     app: jaeger
