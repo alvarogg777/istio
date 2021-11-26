@@ -1,0 +1,2532 @@
+commit 623d60791f93a50118048510d7970607fd13f9dc
+Author: alvaro <alvaro.gallego777@gmail.com>
+Date:   Thu Nov 25 02:51:05 2021 +0100
+
+    bootstrap
+
+diff --git a/manifests/charts/base/regcred.yaml b/manifests/charts/base/regcred.yaml
+index a4f5c739f6..7b44540df1 100644
+--- a/manifests/charts/base/regcred.yaml
++++ b/manifests/charts/base/regcred.yaml
+@@ -6,7 +6,7 @@ metadata:
+   namespace: istio-system
+ spec:
+   encryptedData:
+-    .dockerconfigjson: AgAX9KwJ6jGmjX417ixBlAWbE33ZDSjkJ1WciIxP9S0A+gRd/LRsK0x5Xt06B5W72ynkY1p7v75FsTPkyEOwcinNhymE7EFdiIeY0E3Q71tkRuyAAwOWS2hlzYq65BOKX6vHArM39MW6wkiQTTDolNa/xJ7TCr+Gy/uk3q/hOKA1IN0D9F2LPYYiY4YwbEorpgMU8EPKcIpBpyK6ORkvv6Rr3ffzaZMFCeXF3QmdcVHxr11UJcFhEG+6WZsN46hBLSISd+GQYW9tr/Uu+V904T/r3HYiWWdFBSnntXQf6q6zMXTrXaIyy1EDDRreQzMinuu9Fe8BjXvK+B41GJUOUEP63QOmV03xl+BnE14WmDjiAORIt+Kmg/JhulLDc5nnyvAzrEqX4gyAsF0TXwHh4dA+szEA5LolhhZOcy0CrZMSrs3Vdh3cKBu0yfVV4BFT6zO/GYRSv4kpr2s6ViN49RpMLhKo+mxnkskTKn73Rdz50hV9oqk0FLasPMtx5L1gvZuiR2CbcMFXd6xscJOHZ+Y/6HMZ04B9LROHt4g5ZjDeg0g0fLqQ3Th8a1qu1p5M3NI+HJ06WoHUCBUyIc9dwQZqVYU8CImN/Uq5C61tCWk1rgRQQA4ty0F+TrizzGa4hadvOWwn9Ds7GJ7E2Ps9JO+Qi6HNQGG+CAz/gu9QOwkZWH8kJtAy/apl7SC8hy1BuRW6NAhPNuNawC97aBhaZ5//qsBHlT4n/8BzcFPezP09wTInkJ9HwyLWpX3yaNExdgU8ulyROL989yGnPfGgJdhCB8t7ALY1Bi/W27C9URW1ai1/Wd8CWMf6G2Tyax7G5cFmHpDR76//1DB6kc4pHN3pCiuxI0RXDho+ARLMbMQCfu3PYN/5r4XJ3N0hiSirZ+ngLISCGq5oJD8pmAZ4/R4mTAJVVjtR
++    .dockerconfigjson: AgCfh2ocoHERQUMTgZLq5qdpchzpc5aVvpf2RLRVyjeIKePDIj/GRYvaCNKuQd1GZIG1nMtpWyC4vrfOoBRvkagvHFTY8cHINZ+g3uuZUmPFpLJioRprx0w1tkozD5bYr43Oi7XSYeH0woYxu0mON6sZopET/HM2O2G/6k1JXLB7eLa0O+I1TfXdLYJgVirL7ItkdyjBJtasDJMD3bHVVOguXNo9cE1S0zNryFNdZEDzkqoUq85gMQ1M2QIOdFmaFjQ8q547tQDJu2Z1ZXTtwXd7VIzQqlVfBVSRqlzQOeL4rZOYMJWMKoEVsPc7zRNff8o+cI0QZ10/BMTCHPxXOyQBHjsHo8Kvd2xitNUdS2wM66qBv1ktYeIUzNq0ngeRDxb3eKjoLBr8kT4TIJtkWX3fDSxQ67ZvzhAmnAjkavFA16pdOvb/SnkXEe6r/rfUBZ2hUyxw+8CBbE9GDAnKI7z843zkqA9gMH0NVxa4ay/ZxEPxLQ7e3LAsrstyoIOIwoQZDzxFiu3ODe+YD3tJ75ekaBZ0zQzWl0q/j1hrETjSGRoeG61GXiIldwNrbDjzZA2Mru9o1Txo7QMc/y4Tvh7+4Et9Wq7j3bbY3Bhb+dQeFNQQtSRPXz+BuMjA/6tIcXv3L52EXYXeYxSAM0Fx6god1P1glm2ugftkQpeTp1GvIqGox5tCKZTaWOU+BMhUyzbX0dIgiGRdJ4P5gYXM79ljcX1HdY6IxY8nXvbthLE8139LZKR0BxEgVsMn/q+ojyogaPHtr5aD/H6xSHdfv2Kkoi85mt685iGRsPv4KDX/6uWJrVc6k3QBHwM/qXCDhx59DXqn3GRuqaopEiuPUQoLMC2uACjD3t/mBZ0NdxZNPpkqvX/2ddiIv0hmrCy1L2DcTw3rXrHdRSPGVLTFnNCYAjalQCAg
+   template:
+     data: null
+     metadata:
+
+commit 72daa6b0d3189d3fd65c31c2dc820afeffb0f491
+Author: alvaro <alvaro.gallego777@gmail.com>
+Date:   Wed Nov 24 09:53:51 2021 +0100
+
+    1.12.0 bootstrap
+
+diff --git a/kustomization.yaml b/kustomization.yaml
+new file mode 100644
+index 0000000000..590be3a272
+--- /dev/null
++++ b/kustomization.yaml
+@@ -0,0 +1,8 @@
++
++resources:
++- ./manifests/charts/base
++- ./manifests/charts/istio-control/istio-discovery
++- ./manifests/charts/gateways/istio-ingress
++- ./manifests/charts/gateways/istio-egress
++# - ./samples/addons
++# namespace: istio-system
+diff --git a/manifests/charts/gateways/istio-egress/build.sh b/manifests/charts/gateways/istio-egress/build.sh
+new file mode 100755
+index 0000000000..c8301247e8
+--- /dev/null
++++ b/manifests/charts/gateways/istio-egress/build.sh
+@@ -0,0 +1 @@
++helm template -nistio-system egress . > istio-egress.yaml
+diff --git a/manifests/charts/gateways/istio-egress/istio-egress.yaml b/manifests/charts/gateways/istio-egress/istio-egress.yaml
+new file mode 100644
+index 0000000000..e1bc509829
+--- /dev/null
++++ b/manifests/charts/gateways/istio-egress/istio-egress.yaml
+@@ -0,0 +1,367 @@
++---
++# Source: istio-egress/templates/poddisruptionbudget.yaml
++apiVersion: policy/v1beta1
++kind: PodDisruptionBudget
++metadata:
++  name: istio-egressgateway
++  namespace: istio-system
++  labels:
++    app: istio-egressgateway
++    istio: egressgateway
++    release: egress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "EgressGateways"
++spec:
++  minAvailable: 1
++  selector:
++    matchLabels:
++      app: istio-egressgateway
++      istio: egressgateway
++---
++# Source: istio-egress/templates/serviceaccount.yaml
++apiVersion: v1
++kind: ServiceAccount
++imagePullSecrets:
++  - name: map[name:regcred]
++metadata:
++  name: istio-egressgateway-service-account
++  namespace: istio-system
++  labels:
++    app: istio-egressgateway
++    istio: egressgateway
++    release: egress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "EgressGateways"
++---
++# Source: istio-egress/templates/role.yaml
++apiVersion: rbac.authorization.k8s.io/v1
++kind: Role
++metadata:
++  name: istio-egressgateway-sds
++  namespace: istio-system
++  labels:
++    release: egress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "EgressGateways"
++rules:
++- apiGroups: [""]
++  resources: ["secrets"]
++  verbs: ["get", "watch", "list"]
++---
++# Source: istio-egress/templates/rolebindings.yaml
++apiVersion: rbac.authorization.k8s.io/v1
++kind: RoleBinding
++metadata:
++  name: istio-egressgateway-sds
++  namespace: istio-system
++  labels:
++    release: egress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "EgressGateways"
++roleRef:
++  apiGroup: rbac.authorization.k8s.io
++  kind: Role
++  name: istio-egressgateway-sds
++subjects:
++- kind: ServiceAccount
++  name: istio-egressgateway-service-account
++---
++# Source: istio-egress/templates/service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: istio-egressgateway
++  namespace: istio-system
++  annotations:
++  labels:
++    app: istio-egressgateway
++    istio: egressgateway
++    release: egress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "EgressGateways"
++spec:
++  type: ClusterIP
++  selector:
++    app: istio-egressgateway
++    istio: egressgateway
++  ports:
++    -
++      name: http2
++      port: 80
++      protocol: TCP
++      targetPort: 8080
++    -
++      name: https
++      port: 443
++      protocol: TCP
++      targetPort: 8443
++---
++# Source: istio-egress/templates/deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: istio-egressgateway
++  namespace: istio-system
++  labels:
++    app: istio-egressgateway
++    istio: egressgateway
++    release: egress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "EgressGateways"
++spec:
++  selector:
++    matchLabels:
++      app: istio-egressgateway
++      istio: egressgateway
++  strategy:
++    rollingUpdate:
++      maxSurge: 100%
++      maxUnavailable: 25%
++  template:
++    metadata:
++      labels:
++        app: istio-egressgateway
++        istio: egressgateway
++        heritage: Tiller
++        release: istio
++        chart: gateways
++        service.istio.io/canonical-name: istio-egressgateway
++        service.istio.io/canonical-revision: latest
++        istio.io/rev: default
++        install.operator.istio.io/owning-resource: unknown
++        operator.istio.io/component: "EgressGateways"
++        sidecar.istio.io/inject: "false"
++      annotations:
++        prometheus.io/port: "15020"
++        prometheus.io/scrape: "true"
++        prometheus.io/path: "/stats/prometheus"
++        sidecar.istio.io/inject: "false"
++    spec:
++      securityContext:
++        runAsUser: 1337
++        runAsGroup: 1337
++        runAsNonRoot: true
++        fsGroup: 1337
++      serviceAccountName: istio-egressgateway-service-account
++      containers:
++        - name: istio-proxy
++          image: "docker.io/querycapistio/proxyv2:1.12.0"
++          ports:
++            - containerPort: 8080
++              protocol: TCP
++            - containerPort: 8443
++              protocol: TCP
++            - containerPort: 15090
++              protocol: TCP
++              name: http-envoy-prom
++          args:
++          - proxy
++          - router
++          - --domain
++          - $(POD_NAMESPACE).svc.cluster.local
++          - --proxyLogLevel=warning
++          - --proxyComponentLogLevel=misc:error
++          - --log_output_level=default:info
++          securityContext:
++            allowPrivilegeEscalation: false
++            capabilities:
++              drop:
++              - ALL
++            privileged: false
++            readOnlyRootFilesystem: true
++          readinessProbe:
++            failureThreshold: 30
++            httpGet:
++              path: /healthz/ready
++              port: 15021
++              scheme: HTTP
++            initialDelaySeconds: 1
++            periodSeconds: 2
++            successThreshold: 1
++            timeoutSeconds: 1
++          resources:
++            limits:
++              cpu: 2000m
++              memory: 1024Mi
++            requests:
++              cpu: 100m
++              memory: 128Mi
++          env:
++          - name: TZ
++            value: Europe/Madrid
++          - name: JWT_POLICY
++            value: third-party-jwt
++          - name: PILOT_CERT_PROVIDER
++            value: istiod
++          - name: CA_ADDR
++            value: istiod.istio-system.svc:15012
++          - name: NODE_NAME
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: spec.nodeName
++          - name: POD_NAME
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: metadata.name
++          - name: POD_NAMESPACE
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: metadata.namespace
++          - name: INSTANCE_IP
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: status.podIP
++          - name: HOST_IP
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: status.hostIP
++          - name: SERVICE_ACCOUNT
++            valueFrom:
++              fieldRef:
++                fieldPath: spec.serviceAccountName
++          - name: ISTIO_META_WORKLOAD_NAME
++            value: istio-egressgateway
++          - name: ISTIO_META_OWNER
++            value: kubernetes://apis/apps/v1/namespaces/istio-system/deployments/istio-egressgateway
++          - name: ISTIO_META_MESH_ID
++            value: "cluster.local"
++          - name: TRUST_DOMAIN
++            value: "cluster.local"
++          - name: ISTIO_META_UNPRIVILEGED_POD
++            value: "true"
++          - name: ISTIO_META_CLUSTER_ID
++            value: "Kubernetes"
++          volumeMounts:
++          - name: istio-envoy
++            mountPath: /etc/istio/proxy
++          - name: config-volume
++            mountPath: /etc/istio/config
++          - mountPath: /var/run/secrets/istio
++            name: istiod-ca-cert
++          - name: istio-token
++            mountPath: /var/run/secrets/tokens
++            readOnly: true
++          - mountPath: /var/lib/istio/data
++            name: istio-data
++          - name: podinfo
++            mountPath: /etc/istio/pod
++          - name: egressgateway-certs
++            mountPath: "/etc/istio/egressgateway-certs"
++            readOnly: true
++          - name: egressgateway-ca-certs
++            mountPath: "/etc/istio/egressgateway-ca-certs"
++            readOnly: true
++      volumes:
++      - name: istiod-ca-cert
++        configMap:
++          name: istio-ca-root-cert
++      - name: podinfo
++        downwardAPI:
++          items:
++            - path: "labels"
++              fieldRef:
++                fieldPath: metadata.labels
++            - path: "annotations"
++              fieldRef:
++                fieldPath: metadata.annotations
++      - name: istio-envoy
++        emptyDir: {}
++      - name: istio-data
++        emptyDir: {}
++      - name: istio-token
++        projected:
++          sources:
++          - serviceAccountToken:
++              path: istio-token
++              expirationSeconds: 43200
++              audience: istio-ca
++      - name: config-volume
++        configMap:
++          name: istio
++          optional: true
++      - name: egressgateway-certs
++        secret:
++          secretName: "istio-egressgateway-certs"
++          optional: true
++      - name: egressgateway-ca-certs
++        secret:
++          secretName: "istio-egressgateway-ca-certs"
++          optional: true
++      affinity:
++        nodeAffinity:
++          requiredDuringSchedulingIgnoredDuringExecution:
++              nodeSelectorTerms:
++              - matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "amd64"
++                  - "arm64"
++                  - "ppc64le"
++                  - "s390x"
++          preferredDuringSchedulingIgnoredDuringExecution:
++            - weight: 2
++              preference:
++                matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "amd64"
++            - weight: 2
++              preference:
++                matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "arm64"
++            - weight: 2
++              preference:
++                matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "ppc64le"
++            - weight: 2
++              preference:
++                matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "s390x"
++---
++# Source: istio-egress/templates/autoscale.yaml
++apiVersion: autoscaling/v2beta1
++kind: HorizontalPodAutoscaler
++metadata:
++  name: istio-egressgateway
++  namespace: istio-system
++  labels:
++    app: istio-egressgateway
++    istio: egressgateway
++    release: egress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "EgressGateways"
++spec:
++  maxReplicas: 5
++  minReplicas: 1
++  scaleTargetRef:
++    apiVersion: apps/v1
++    kind: Deployment
++    name: istio-egressgateway
++  metrics:
++    - type: Resource
++      resource:
++        name: cpu
++        targetAverageUtilization: 80
+diff --git a/manifests/charts/gateways/istio-egress/kustomization.yaml b/manifests/charts/gateways/istio-egress/kustomization.yaml
+new file mode 100644
+index 0000000000..8b86d020eb
+--- /dev/null
++++ b/manifests/charts/gateways/istio-egress/kustomization.yaml
+@@ -0,0 +1,2 @@
++resources:
++- istio-egress.yaml
+diff --git a/manifests/charts/gateways/istio-ingress/build.sh b/manifests/charts/gateways/istio-ingress/build.sh
+new file mode 100755
+index 0000000000..93360eb7a9
+--- /dev/null
++++ b/manifests/charts/gateways/istio-ingress/build.sh
+@@ -0,0 +1 @@
++helm template -nistio-system ingress . > istio-ingress.yaml
+diff --git a/manifests/charts/gateways/istio-ingress/istio-ingress.yaml b/manifests/charts/gateways/istio-ingress/istio-ingress.yaml
+new file mode 100644
+index 0000000000..b486aabd8c
+--- /dev/null
++++ b/manifests/charts/gateways/istio-ingress/istio-ingress.yaml
+@@ -0,0 +1,375 @@
++---
++# Source: istio-ingress/templates/poddisruptionbudget.yaml
++apiVersion: policy/v1beta1
++kind: PodDisruptionBudget
++metadata:
++  name: istio-ingressgateway
++  namespace: istio-system
++  labels:
++    app: istio-ingressgateway
++    istio: ingressgateway
++    release: ingress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "IngressGateways"
++spec:
++  minAvailable: 1
++  selector:
++    matchLabels:
++      app: istio-ingressgateway
++      istio: ingressgateway
++---
++# Source: istio-ingress/templates/serviceaccount.yaml
++apiVersion: v1
++kind: ServiceAccount
++imagePullSecrets:
++  - name: map[name:regcred]
++metadata:
++  name: istio-ingressgateway-service-account
++  namespace: istio-system
++  labels:
++    app: istio-ingressgateway
++    istio: ingressgateway
++    release: ingress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "IngressGateways"
++---
++# Source: istio-ingress/templates/role.yaml
++apiVersion: rbac.authorization.k8s.io/v1
++kind: Role
++metadata:
++  name: istio-ingressgateway-sds
++  namespace: istio-system
++  labels:
++    release: ingress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "IngressGateways"
++rules:
++- apiGroups: [""]
++  resources: ["secrets"]
++  verbs: ["get", "watch", "list"]
++---
++# Source: istio-ingress/templates/rolebindings.yaml
++apiVersion: rbac.authorization.k8s.io/v1
++kind: RoleBinding
++metadata:
++  name: istio-ingressgateway-sds
++  namespace: istio-system
++  labels:
++    release: ingress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "IngressGateways"
++roleRef:
++  apiGroup: rbac.authorization.k8s.io
++  kind: Role
++  name: istio-ingressgateway-sds
++subjects:
++- kind: ServiceAccount
++  name: istio-ingressgateway-service-account
++---
++# Source: istio-ingress/templates/service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: istio-ingressgateway
++  namespace: istio-system
++  annotations:
++  labels:
++    app: istio-ingressgateway
++    istio: ingressgateway
++    release: ingress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "IngressGateways"
++spec:
++  externalTrafficPolicy: Local
++  type: LoadBalancer
++  selector:
++    app: istio-ingressgateway
++    istio: ingressgateway
++  ports:
++    -
++      name: status-port
++      port: 15021
++      protocol: TCP
++      targetPort: 15021
++    -
++      name: http2
++      port: 80
++      protocol: TCP
++      targetPort: 8080
++    -
++      name: https
++      port: 443
++      protocol: TCP
++      targetPort: 8443
++---
++# Source: istio-ingress/templates/deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: istio-ingressgateway
++  namespace: istio-system
++  labels:
++    app: istio-ingressgateway
++    istio: ingressgateway
++    release: ingress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "IngressGateways"
++spec:
++  selector:
++    matchLabels:
++      app: istio-ingressgateway
++      istio: ingressgateway
++  strategy:
++    rollingUpdate:
++      maxSurge: 100%
++      maxUnavailable: 25%
++  template:
++    metadata:
++      labels:
++        app: istio-ingressgateway
++        istio: ingressgateway
++        heritage: Tiller
++        release: istio
++        chart: gateways
++        service.istio.io/canonical-name: istio-ingressgateway
++        service.istio.io/canonical-revision: latest
++        istio.io/rev: default
++        install.operator.istio.io/owning-resource: unknown
++        operator.istio.io/component: "IngressGateways"
++        sidecar.istio.io/inject: "false"
++      annotations:
++        prometheus.io/port: "15020"
++        prometheus.io/scrape: "true"
++        prometheus.io/path: "/stats/prometheus"
++        sidecar.istio.io/inject: "false"
++    spec:
++      securityContext:
++        runAsUser: 1337
++        runAsGroup: 1337
++        runAsNonRoot: true
++        fsGroup: 1337
++      serviceAccountName: istio-ingressgateway-service-account
++      containers:
++        - name: istio-proxy
++          image: "docker.io/querycapistio/proxyv2:1.12.0"
++          ports:
++            - containerPort: 15021
++              protocol: TCP
++            - containerPort: 8080
++              protocol: TCP
++            - containerPort: 8443
++              protocol: TCP
++            - containerPort: 15090
++              protocol: TCP
++              name: http-envoy-prom
++          args:
++          - proxy
++          - router
++          - --domain
++          - $(POD_NAMESPACE).svc.cluster.local
++          - --proxyLogLevel=warning
++          - --proxyComponentLogLevel=misc:error
++          - --log_output_level=default:info
++          securityContext:
++            allowPrivilegeEscalation: false
++            capabilities:
++              drop:
++              - ALL
++            privileged: false
++            readOnlyRootFilesystem: true
++          readinessProbe:
++            failureThreshold: 30
++            httpGet:
++              path: /healthz/ready
++              port: 15021
++              scheme: HTTP
++            initialDelaySeconds: 1
++            periodSeconds: 2
++            successThreshold: 1
++            timeoutSeconds: 1
++          resources:
++            limits:
++              cpu: 2000m
++              memory: 1024Mi
++            requests:
++              cpu: 100m
++              memory: 128Mi
++          env:
++          - name: TZ
++            value: Europe/Madrid
++          - name: JWT_POLICY
++            value: third-party-jwt
++          - name: PILOT_CERT_PROVIDER
++            value: istiod
++          - name: CA_ADDR
++            value: istiod.istio-system.svc:15012
++          - name: NODE_NAME
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: spec.nodeName
++          - name: POD_NAME
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: metadata.name
++          - name: POD_NAMESPACE
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: metadata.namespace
++          - name: INSTANCE_IP
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: status.podIP
++          - name: HOST_IP
++            valueFrom:
++              fieldRef:
++                apiVersion: v1
++                fieldPath: status.hostIP
++          - name: SERVICE_ACCOUNT
++            valueFrom:
++              fieldRef:
++                fieldPath: spec.serviceAccountName
++          - name: ISTIO_META_WORKLOAD_NAME
++            value: istio-ingressgateway
++          - name: ISTIO_META_OWNER
++            value: kubernetes://apis/apps/v1/namespaces/istio-system/deployments/istio-ingressgateway
++          - name: ISTIO_META_MESH_ID
++            value: "cluster.local"
++          - name: TRUST_DOMAIN
++            value: "cluster.local"
++          - name: ISTIO_META_UNPRIVILEGED_POD
++            value: "true"
++          - name: ISTIO_META_CLUSTER_ID
++            value: "Kubernetes"
++          volumeMounts:
++          - name: istio-envoy
++            mountPath: /etc/istio/proxy
++          - name: config-volume
++            mountPath: /etc/istio/config
++          - mountPath: /var/run/secrets/istio
++            name: istiod-ca-cert
++          - name: istio-token
++            mountPath: /var/run/secrets/tokens
++            readOnly: true
++          - mountPath: /var/lib/istio/data
++            name: istio-data
++          - name: podinfo
++            mountPath: /etc/istio/pod
++          - name: ingressgateway-certs
++            mountPath: "/etc/istio/ingressgateway-certs"
++            readOnly: true
++          - name: ingressgateway-ca-certs
++            mountPath: "/etc/istio/ingressgateway-ca-certs"
++            readOnly: true
++      volumes:
++      - name: istiod-ca-cert
++        configMap:
++          name: istio-ca-root-cert
++      - name: podinfo
++        downwardAPI:
++          items:
++            - path: "labels"
++              fieldRef:
++                fieldPath: metadata.labels
++            - path: "annotations"
++              fieldRef:
++                fieldPath: metadata.annotations
++      - name: istio-envoy
++        emptyDir: {}
++      - name: istio-data
++        emptyDir: {}
++      - name: istio-token
++        projected:
++          sources:
++          - serviceAccountToken:
++              path: istio-token
++              expirationSeconds: 43200
++              audience: istio-ca
++      - name: config-volume
++        configMap:
++          name: istio
++          optional: true
++      - name: ingressgateway-certs
++        secret:
++          secretName: "istio-ingressgateway-certs"
++          optional: true
++      - name: ingressgateway-ca-certs
++        secret:
++          secretName: "istio-ingressgateway-ca-certs"
++          optional: true
++      affinity:
++        nodeAffinity:
++          requiredDuringSchedulingIgnoredDuringExecution:
++              nodeSelectorTerms:
++              - matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "amd64"
++                  - "arm64"
++                  - "ppc64le"
++                  - "s390x"
++          preferredDuringSchedulingIgnoredDuringExecution:
++            - weight: 2
++              preference:
++                matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "amd64"
++            - weight: 2
++              preference:
++                matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "arm64"
++            - weight: 2
++              preference:
++                matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "ppc64le"
++            - weight: 2
++              preference:
++                matchExpressions:
++                - key: kubernetes.io/arch
++                  operator: In
++                  values:
++                  - "s390x"
++---
++# Source: istio-ingress/templates/autoscale.yaml
++apiVersion: autoscaling/v2beta1
++kind: HorizontalPodAutoscaler
++metadata:
++  name: istio-ingressgateway
++  namespace: istio-system
++  labels:
++    app: istio-ingressgateway
++    istio: ingressgateway
++    release: ingress
++    istio.io/rev: default
++    install.operator.istio.io/owning-resource: unknown
++    operator.istio.io/component: "IngressGateways"
++spec:
++  maxReplicas: 5
++  minReplicas: 1
++  scaleTargetRef:
++    apiVersion: apps/v1
++    kind: Deployment
++    name: istio-ingressgateway
++  metrics:
++    - type: Resource
++      resource:
++        name: cpu
++        targetAverageUtilization: 80
+diff --git a/manifests/charts/gateways/istio-ingress/kustomization.yaml b/manifests/charts/gateways/istio-ingress/kustomization.yaml
+new file mode 100644
+index 0000000000..0f74792fcb
+--- /dev/null
++++ b/manifests/charts/gateways/istio-ingress/kustomization.yaml
+@@ -0,0 +1,2 @@
++resources:
++- istio-ingress.yaml
+
+commit 978a1fc8f3ca1906da61ead3f6a99c408164f1bc
+Author: alvaro <alvaro.gallego777@gmail.com>
+Date:   Wed Nov 24 09:02:29 2021 +0100
+
+    bootstrap
+
+diff --git a/manifests/charts/base/regcred.yaml b/manifests/charts/base/regcred.yaml
+new file mode 100644
+index 0000000000..a4f5c739f6
+--- /dev/null
++++ b/manifests/charts/base/regcred.yaml
+@@ -0,0 +1,17 @@
++apiVersion: bitnami.com/v1alpha1
++kind: SealedSecret
++metadata:
++  creationTimestamp: null
++  name: regcred
++  namespace: istio-system
++spec:
++  encryptedData:
++    .dockerconfigjson: AgAX9KwJ6jGmjX417ixBlAWbE33ZDSjkJ1WciIxP9S0A+gRd/LRsK0x5Xt06B5W72ynkY1p7v75FsTPkyEOwcinNhymE7EFdiIeY0E3Q71tkRuyAAwOWS2hlzYq65BOKX6vHArM39MW6wkiQTTDolNa/xJ7TCr+Gy/uk3q/hOKA1IN0D9F2LPYYiY4YwbEorpgMU8EPKcIpBpyK6ORkvv6Rr3ffzaZMFCeXF3QmdcVHxr11UJcFhEG+6WZsN46hBLSISd+GQYW9tr/Uu+V904T/r3HYiWWdFBSnntXQf6q6zMXTrXaIyy1EDDRreQzMinuu9Fe8BjXvK+B41GJUOUEP63QOmV03xl+BnE14WmDjiAORIt+Kmg/JhulLDc5nnyvAzrEqX4gyAsF0TXwHh4dA+szEA5LolhhZOcy0CrZMSrs3Vdh3cKBu0yfVV4BFT6zO/GYRSv4kpr2s6ViN49RpMLhKo+mxnkskTKn73Rdz50hV9oqk0FLasPMtx5L1gvZuiR2CbcMFXd6xscJOHZ+Y/6HMZ04B9LROHt4g5ZjDeg0g0fLqQ3Th8a1qu1p5M3NI+HJ06WoHUCBUyIc9dwQZqVYU8CImN/Uq5C61tCWk1rgRQQA4ty0F+TrizzGa4hadvOWwn9Ds7GJ7E2Ps9JO+Qi6HNQGG+CAz/gu9QOwkZWH8kJtAy/apl7SC8hy1BuRW6NAhPNuNawC97aBhaZ5//qsBHlT4n/8BzcFPezP09wTInkJ9HwyLWpX3yaNExdgU8ulyROL989yGnPfGgJdhCB8t7ALY1Bi/W27C9URW1ai1/Wd8CWMf6G2Tyax7G5cFmHpDR76//1DB6kc4pHN3pCiuxI0RXDho+ARLMbMQCfu3PYN/5r4XJ3N0hiSirZ+ngLISCGq5oJD8pmAZ4/R4mTAJVVjtR
++  template:
++    data: null
++    metadata:
++      creationTimestamp: null
++      name: regcred
++      namespace: istio-system
++    type: kubernetes.io/dockerconfigjson
++
+
+commit f74e7d9e9a3b25f5e00f32fb8e98c082648df9a1
+Author: alvaro <alvaro.gallego777@gmail.com>
+Date:   Sat Nov 20 23:21:47 2021 +0100
+
+    metrics
+
+diff --git a/samples/addons/grafana.yaml b/samples/addons/grafana.yaml
+index 7d3fa9c27f..2766a718cc 100644
+--- a/samples/addons/grafana.yaml
++++ b/samples/addons/grafana.yaml
+@@ -37,6 +37,22 @@ data:
+     logs = /var/log/grafana
+     plugins = /var/lib/grafana/plugins
+     provisioning = /etc/grafana/provisioning
++    [server]
++    ;protocol = http
++    ;http_port = 80
++    ;domain = grafana.alboroto.live
++    ;enforce_domain = true
++    root_url = http://grafana.alboroto.live
++    [auth.generic_oauth]
++    enabled = true
++    name = Oauth
++    allow_sign_up = true
++    client_id = account
++    client_secret = b9a9a44e-360d-4816-aa11-0fd80f83ce8c
++    auth_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/auth
++    token_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/token
++    api_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/userinfo
++    scopes = openid profile email
+ 
+   datasources.yaml: |
+     apiVersion: 1
+@@ -161,7 +177,8 @@ spec:
+               containerPort: 3000
+               protocol: TCP
+           env:
+-            
++            - name: TZ
++              value: Europe/Madrid
+             - name: GF_PATHS_DATA
+               value: /var/lib/grafana/
+             - name: GF_PATHS_LOGS
+@@ -177,9 +194,9 @@ spec:
+             - name: "GF_AUTH_BASIC_ENABLED"
+               value: "false"
+             - name: "GF_SECURITY_ADMIN_PASSWORD"
+-              value: "-"
++              value: "changeme" # "-"
+             - name: "GF_SECURITY_ADMIN_USER"
+-              value: "-"
++              value: "alboroto" # "-"
+           livenessProbe:
+             failureThreshold: 10
+             httpGet:
+diff --git a/samples/addons/ingress.yaml b/samples/addons/ingress.yaml
+new file mode 100644
+index 0000000000..48520e00ec
+--- /dev/null
++++ b/samples/addons/ingress.yaml
+@@ -0,0 +1,48 @@
++apiVersion: networking.k8s.io/v1
++kind: Ingress
++metadata:
++  name: istio-system
++  namespace: istio-system
++  annotations:
++    kubernetes.io/ingress.class: istio
++spec:
++  rules:
++  - host: grafana.alboroto.live
++    http:
++      paths:
++      - path: /
++        pathType: Prefix
++        backend:
++          service:
++            name: grafana
++            port:
++              number: 3000
++  - host: jaeger.alboroto.live
++    http:
++      paths:
++      - path: /
++        pathType: Prefix
++        backend:
++          service:
++            name: jaeger
++            port:
++              number: 16686
++  - host: prometheus.alboroto.live
++    http:
++      paths:
++      - path: /
++        pathType: Prefix
++        backend:
++          service:
++            name: prometheus
++            port:
++              number: 9090
++  # - host: auth.alboroto.live
++  #   http:
++  #     paths:
++  #     - path: /
++  #       pathType: Prefix
++  #       backend:
++  #         serviceName: authelia-service
++  #         servicePort: 80
++
+diff --git a/samples/addons/jaeger.yaml b/samples/addons/jaeger.yaml
+index d97c076414..eac0d7fbaa 100644
+--- a/samples/addons/jaeger.yaml
++++ b/samples/addons/jaeger.yaml
+@@ -18,10 +18,14 @@ spec:
+         prometheus.io/scrape: "true"
+         prometheus.io/port: "14269"
+     spec:
++      imagePullSecrets:
++        - name: regcred
+       containers:
+         - name: jaeger
+-          image: "docker.io/jaegertracing/all-in-one:1.23"
++          image: "docker.io/jaegertracing/all-in-one:1.28.0"
+           env:
++            - name: TZ
++              value: Europe/Madrid
+             - name: BADGER_EPHEMERAL
+               value: "false"
+             - name: SPAN_STORAGE_TYPE
+@@ -57,7 +61,7 @@ spec:
+ apiVersion: v1
+ kind: Service
+ metadata:
+-  name: tracing
++  name: jaeger # tracing
+   namespace: istio-system
+   labels:
+     app: jaeger
+diff --git a/samples/addons/kiali-gateway.yaml b/samples/addons/kiali-gateway.yaml
+new file mode 100644
+index 0000000000..dc350df4d2
+--- /dev/null
++++ b/samples/addons/kiali-gateway.yaml
+@@ -0,0 +1,62 @@
++---
++apiVersion: networking.istio.io/v1alpha3
++kind: Gateway
++metadata:
++  name: kiali-gateway
++  namespace: istio-system
++spec:
++  selector:
++    istio: ingressgateway
++  servers:
++  - port:
++      number: 80
++      name: http-kiali
++      protocol: HTTP
++    # https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings
++    tls:
++      httpsRedirect: false
++    hosts:
++    - kiali.alboroto.live
++  - port:
++      number: 443
++      name: https-kiali
++      protocol: HTTPS
++    tls: {}
++    hosts:
++    - kiali.alboroto.live
++...
++---
++apiVersion: networking.istio.io/v1alpha3
++kind: VirtualService
++metadata:
++  name: kiali-virtualservice
++  namespace: istio-system
++spec:
++  gateways:
++  - kiali-gateway
++  hosts:
++  - kiali.alboroto.live
++  http:
++  - headers:
++      request:
++        set:
++          X-Forwarded-Port: "80"
++    route:
++    - destination:
++        host: kiali.istio-system.svc.cluster.local
++        port:
++          number: 20001
++      weight: 100
++...
++---
++apiVersion: networking.istio.io/v1alpha3
++kind: DestinationRule
++metadata:
++  name: kiali-destinationrule
++  namespace: istio-system
++spec:
++  host: kiali
++  trafficPolicy:
++    tls:
++      mode: DISABLE
++...
+diff --git a/samples/addons/kiali.yaml b/samples/addons/kiali.yaml
+index bbe7c44280..f605885417 100644
+--- a/samples/addons/kiali.yaml
++++ b/samples/addons/kiali.yaml
+@@ -34,10 +34,18 @@ metadata:
+ data:
+   config.yaml: |
+     auth:
+-      openid: {}
+-      openshift:
+-        client_id_prefix: kiali
+-      strategy: anonymous
++      strategy: openid
++      #strategy: anonymous
++      openid:
++        insecure_skip_verify_tls: true
++        client_id: "kiali"
++        disable_rbac: true
++        client_secret: "b09cf4f7-4482-46ef-993f-fac05f8e9e25"
++        issuer_uri: "https://kc.alboroto.live/auth/realms/alborotoproject"
++        scopes: ["openid"]
++        username_claim: "sub"
++      #openshift:
++      #  client_id_prefix: kiali
+     deployment:
+       accessible_namespaces:
+       - '**'
+@@ -81,6 +89,20 @@ data:
+     external_services:
+       custom_dashboards:
+         enabled: true
++      grafana:
++        url: http://grafana.alboroto.live
++        in_cluster_url: "http://grafana.istio-system.svc.cluster.local:3000"
++      tracing:
++        in_cluster_url: "http://jaeger.istio-system.svc.cluster.local:16686"
++        service: "jaeger"
++        url: http://jaeger.alboroto.live
++      prometheus:
++        custom_metrics_url: http://prometheus.istio-system.svc.cluster.local:9090
++        url: http://prometheus.alboroto.live
++        component_status:
++          app_label: "prometheus"
++          is_core: true
++          namespace: "istio-system"
+     identity:
+       cert_file: ""
+       private_key_file: ""
+@@ -496,6 +518,8 @@ spec:
+           initialDelaySeconds: 5
+           periodSeconds: 30
+         env:
++        - name: TZ
++          value: Europe/Madrid
+         - name: ACTIVE_NAMESPACE
+           valueFrom:
+             fieldRef:
+diff --git a/samples/addons/kustomization.yaml b/samples/addons/kustomization.yaml
+new file mode 100644
+index 0000000000..7e2024ca97
+--- /dev/null
++++ b/samples/addons/kustomization.yaml
+@@ -0,0 +1,22 @@
++apiVersion: kustomize.config.k8s.io/v1beta1
++kind: Kustomization
++resources:
++# - https://raw.githubusercontent.com/alvarogg777/docker-selenium/4.0.0-20211013/chart/manifests/selenium-grid.yaml
++- selenium-grid.yaml
++- prometheus.yaml
++- grafana.yaml
++- jaeger.yaml
++- kiali.yaml
++- ingress.yaml
++- kiali-gateway.yaml
++#patchesStrategicMerge:
++#- patch-grid.yaml
++#patches:
++#- target:
++#    kind: Deployment
++#  patch: |-
++#    - op: add
++#      path: /spec/template/spec/imagePullSecrets/-
++#      value:
++#        name: regcred
++namespace: istio-system
+diff --git a/samples/addons/prometheus.yaml b/samples/addons/prometheus.yaml
+index c3158d38a6..fe4ba654db 100644
+--- a/samples/addons/prometheus.yaml
++++ b/samples/addons/prometheus.yaml
+@@ -1,4 +1,300 @@
+ ---
++# Source: kube-state-metrics/templates/serviceaccount.yaml
++apiVersion: v1
++kind: ServiceAccount
++metadata:
++  labels:    
++    helm.sh/chart: kube-state-metrics-4.0.1
++    app.kubernetes.io/managed-by: Helm
++    app.kubernetes.io/component: metrics
++    app.kubernetes.io/part-of: kube-state-metrics
++    app.kubernetes.io/name: kube-state-metrics
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "2.2.0"
++  name: prometheus-kube-state-metrics
++  namespace: istio-system
++imagePullSecrets:
++  - name: regcred
++---
++# Source: alertmanager/templates/serviceaccount.yaml
++apiVersion: v1
++kind: ServiceAccount
++metadata:
++  name: prometheus-alertmanager
++  labels:
++    helm.sh/chart: alertmanager-0.14.0
++    app.kubernetes.io/name: alertmanager
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "v0.23.0"
++    app.kubernetes.io/managed-by: Helm
++---
++# Source: prometheus-node-exporter/templates/psp.yaml
++apiVersion: policy/v1beta1
++kind: PodSecurityPolicy
++metadata:
++  name: prometheus-prometheus-node-exporter
++  namespace: istio-system
++  labels:     
++    app: prometheus-node-exporter
++    heritage: Helm
++    release: prometheus
++    chart: prometheus-node-exporter-2.2.0
++spec:
++  privileged: false
++  # Required to prevent escalations to root.
++  # allowPrivilegeEscalation: false
++  # This is redundant with non-root + disallow privilege escalation,
++  # but we can provide it for defense in depth.
++  #requiredDropCapabilities:
++  #  - ALL
++  # Allow core volume types.
++  volumes:
++    - 'configMap'
++    - 'emptyDir'
++    - 'projected'
++    - 'secret'
++    - 'downwardAPI'
++    - 'persistentVolumeClaim'
++    - 'hostPath'
++  hostNetwork: true
++  hostIPC: false
++  hostPID: true
++  hostPorts:
++    - min: 0
++      max: 65535
++  runAsUser:
++    # Permits the container to run with root privileges as well.
++    rule: 'RunAsAny'
++  seLinux:
++    # This policy assumes the nodes are using AppArmor rather than SELinux.
++    rule: 'RunAsAny'
++  supplementalGroups:
++    rule: 'MustRunAs'
++    ranges:
++      # Forbid adding the root group.
++      - min: 0
++        max: 65535
++  fsGroup:
++    rule: 'MustRunAs'
++    ranges:
++      # Forbid adding the root group.
++      - min: 0
++        max: 65535
++  readOnlyRootFilesystem: false
++---
++# Source: prometheus-node-exporter/templates/psp-clusterrole.yaml
++kind: ClusterRole
++apiVersion: rbac.authorization.k8s.io/v1
++metadata:
++  name: psp-prometheus-prometheus-node-exporter
++  labels:     
++    app: prometheus-node-exporter
++    heritage: Helm
++    release: prometheus
++    chart: prometheus-node-exporter-2.2.0
++rules:
++- apiGroups: ['extensions']
++  resources: ['podsecuritypolicies']
++  verbs:     ['use']
++  resourceNames:
++  - prometheus-prometheus-node-exporter
++---
++# Source: prometheus-node-exporter/templates/psp-clusterrolebinding.yaml
++apiVersion: rbac.authorization.k8s.io/v1
++kind: ClusterRoleBinding
++metadata:
++  name: psp-prometheus-prometheus-node-exporter
++  labels:     
++    app: prometheus-node-exporter
++    heritage: Helm
++    release: prometheus
++    chart: prometheus-node-exporter-2.2.0
++roleRef:
++  apiGroup: rbac.authorization.k8s.io
++  kind: ClusterRole
++  name: psp-prometheus-prometheus-node-exporter
++subjects:
++  - kind: ServiceAccount
++    name: prometheus-prometheus-node-exporter
++    namespace: istio-system
++---
++# Source: prometheus-node-exporter/templates/serviceaccount.yaml
++apiVersion: v1
++kind: ServiceAccount
++metadata:
++  name: prometheus-prometheus-node-exporter
++  namespace: istio-system
++  labels:
++    app: prometheus-node-exporter
++    chart: prometheus-node-exporter-2.2.0
++    release: "prometheus"
++    heritage: "Helm"
++  annotations:
++    {}
++imagePullSecrets:
++  - name: regcred
++---
++# Source: kube-state-metrics/templates/role.yaml
++apiVersion: rbac.authorization.k8s.io/v1
++kind: ClusterRole
++metadata:
++  labels:
++    app.kubernetes.io/name: kube-state-metrics
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/component: metrics 
++    app.kubernetes.io/managed-by: Helm
++    app.kubernetes.io/version: "4.0.1"
++    app.kubernetes.io/part-of: kube-state-metrics 
++    helm.sh/chart: kube-state-metrics-4.0.1 
++  name: prometheus-kube-state-metrics
++rules:
++
++- apiGroups: ["certificates.k8s.io"]
++  resources:
++  - certificatesigningrequests
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - configmaps
++  verbs: ["list", "watch"]
++
++- apiGroups: ["batch"]
++  resources:
++  - cronjobs
++  verbs: ["list", "watch"]
++
++- apiGroups: ["extensions", "apps"]
++  resources:
++  - daemonsets
++  verbs: ["list", "watch"]
++
++- apiGroups: ["extensions", "apps"]
++  resources:
++  - deployments
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - endpoints
++  verbs: ["list", "watch"]
++
++- apiGroups: ["autoscaling"]
++  resources:
++  - horizontalpodautoscalers
++  verbs: ["list", "watch"]
++
++- apiGroups: ["extensions", "networking.k8s.io"]
++  resources:
++  - ingresses
++  verbs: ["list", "watch"]
++
++- apiGroups: ["batch"]
++  resources:
++  - jobs
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - limitranges
++  verbs: ["list", "watch"]
++
++- apiGroups: ["admissionregistration.k8s.io"]
++  resources:
++    - mutatingwebhookconfigurations
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - namespaces
++  verbs: ["list", "watch"]
++
++- apiGroups: ["networking.k8s.io"]
++  resources:
++  - networkpolicies
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - nodes
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - persistentvolumeclaims
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - persistentvolumes
++  verbs: ["list", "watch"]
++
++- apiGroups: ["policy"]
++  resources:
++    - poddisruptionbudgets
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - pods
++  verbs: ["list", "watch"]
++
++- apiGroups: ["extensions", "apps"]
++  resources:
++  - replicasets
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - replicationcontrollers
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - resourcequotas
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - secrets
++  verbs: ["list", "watch"]
++
++- apiGroups: [""]
++  resources:
++  - services
++  verbs: ["list", "watch"]
++
++- apiGroups: ["apps"]
++  resources:
++  - statefulsets
++  verbs: ["list", "watch"]
++
++- apiGroups: ["storage.k8s.io"]
++  resources:
++    - storageclasses
++  verbs: ["list", "watch"]
++
++- apiGroups: ["admissionregistration.k8s.io"]
++  resources:
++    - validatingwebhookconfigurations
++  verbs: ["list", "watch"]
++
++- apiGroups: ["storage.k8s.io"]
++  resources:
++    - volumeattachments
++  verbs: ["list", "watch"]
++---
++# Source: prometheus-pushgateway/templates/serviceaccount.yaml
++apiVersion: v1
++kind: ServiceAccount
++metadata:
++  name: prometheus-prometheus-pushgateway
++  labels:
++    app: prometheus-pushgateway
++    chart: prometheus-pushgateway-1.13.0
++    heritage: Helm
++    release: prometheus
++---
+ # Source: prometheus/templates/server/serviceaccount.yaml
+ apiVersion: v1
+ kind: ServiceAccount
+@@ -14,6 +310,30 @@ metadata:
+   annotations:
+     {}
+ ---
++# Source: alertmanager/templates/configmap.yaml
++apiVersion: v1
++kind: ConfigMap
++metadata:
++  name: prometheus-alertmanager
++  labels:
++    helm.sh/chart: alertmanager-0.14.0
++    app.kubernetes.io/name: alertmanager
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "v0.23.0"
++    app.kubernetes.io/managed-by: Helm
++data:
++  alertmanager.yml: |
++    global: {}
++    receivers:
++    - name: default-receiver
++    route:
++      group_interval: 5m
++      group_wait: 10s
++      receiver: default-receiver
++      repeat_interval: 3h
++    templates:
++    - /etc/alertmanager/*.tmpl
++---
+ # Source: prometheus/templates/server/cm.yaml
+ apiVersion: v1
+ kind: ConfigMap
+@@ -34,7 +354,7 @@ data:
+   prometheus.yml: |
+     global:
+       evaluation_interval: 1m
+-      scrape_interval: 15s
++      scrape_interval: 1m
+       scrape_timeout: 10s
+     rule_files:
+     - /etc/config/recording_rules.yml
+@@ -341,6 +661,28 @@ rules:
+     verbs:
+       - get
+ ---
++# Source: kube-state-metrics/templates/clusterrolebinding.yaml
++apiVersion: rbac.authorization.k8s.io/v1
++kind: ClusterRoleBinding
++metadata:
++  labels:    
++    helm.sh/chart: kube-state-metrics-4.0.1
++    app.kubernetes.io/managed-by: Helm
++    app.kubernetes.io/component: metrics
++    app.kubernetes.io/part-of: kube-state-metrics
++    app.kubernetes.io/name: kube-state-metrics
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "2.2.0"
++  name: prometheus-kube-state-metrics
++roleRef:
++  apiGroup: rbac.authorization.k8s.io
++  kind: ClusterRole
++  name: prometheus-kube-state-metrics
++subjects:
++- kind: ServiceAccount
++  name: prometheus-kube-state-metrics
++  namespace: istio-system
++---
+ # Source: prometheus/templates/server/clusterrolebinding.yaml
+ apiVersion: rbac.authorization.k8s.io/v1
+ kind: ClusterRoleBinding
+@@ -361,6 +703,124 @@ roleRef:
+   kind: ClusterRole
+   name: prometheus
+ ---
++# Source: kube-state-metrics/templates/service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: prometheus-kube-state-metrics
++  namespace: istio-system
++  labels:
++    helm.sh/chart: kube-state-metrics-4.0.1
++    app.kubernetes.io/managed-by: Helm
++    app.kubernetes.io/component: metrics
++    app.kubernetes.io/part-of: kube-state-metrics
++    app.kubernetes.io/name: kube-state-metrics
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "2.2.0"
++  annotations:
++    prometheus.io/scrape: 'true'
++spec:
++  type: "ClusterIP"
++  ports:
++  - name: "http"
++    protocol: TCP
++    port: 8080
++    targetPort: 8080
++  selector:
++    app.kubernetes.io/name: kube-state-metrics
++    app.kubernetes.io/instance: prometheus
++---
++# Source: alertmanager/templates/services.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: prometheus-alertmanager
++  labels:
++    helm.sh/chart: alertmanager-0.14.0
++    app.kubernetes.io/name: alertmanager
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "v0.23.0"
++    app.kubernetes.io/managed-by: Helm
++spec:
++  type: ClusterIP
++  ports:
++    - port: 9093
++      targetPort: http
++      protocol: TCP
++      name: http
++  selector:
++    app.kubernetes.io/name: alertmanager
++    app.kubernetes.io/instance: prometheus
++---
++# Source: alertmanager/templates/services.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: prometheus-alertmanager-headless
++  labels:
++    helm.sh/chart: alertmanager-0.14.0
++    app.kubernetes.io/name: alertmanager
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "v0.23.0"
++    app.kubernetes.io/managed-by: Helm
++spec:
++  clusterIP: None
++  ports:
++    - port: 9093
++      targetPort: http
++      protocol: TCP
++      name: http
++  selector:
++    app.kubernetes.io/name: alertmanager
++    app.kubernetes.io/instance: prometheus
++---
++# Source: prometheus-node-exporter/templates/service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: prometheus-prometheus-node-exporter
++  namespace: istio-system
++  annotations:
++    prometheus.io/scrape: "true"
++  labels:     
++    app: prometheus-node-exporter
++    heritage: Helm
++    release: prometheus
++    chart: prometheus-node-exporter-2.2.0
++spec:
++  type: ClusterIP
++  ports:
++    - port: 9100
++      targetPort: 9100
++      protocol: TCP
++      name: metrics
++  selector:
++    app: prometheus-node-exporter
++    release: prometheus
++---
++# Source: prometheus-pushgateway/templates/service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: prometheus-prometheus-pushgateway
++  annotations:
++    {}
++  labels:
++    app: prometheus-pushgateway
++    chart: prometheus-pushgateway-1.13.0
++    heritage: Helm
++    release: prometheus
++spec:
++  type: ClusterIP
++  ports:
++    - port: 9091
++      targetPort: 9091
++      protocol: TCP
++      name: http
++  selector:
++    app: prometheus-pushgateway
++    release: prometheus
++---
+ # Source: prometheus/templates/server/service.yaml
+ apiVersion: v1
+ kind: Service
+@@ -386,6 +846,314 @@ spec:
+   sessionAffinity: None
+   type: "ClusterIP"
+ ---
++# Source: prometheus-node-exporter/templates/daemonset.yaml
++apiVersion: apps/v1
++kind: DaemonSet
++metadata:
++  name: prometheus-prometheus-node-exporter
++  namespace: istio-system
++  labels:     
++    app: prometheus-node-exporter
++    heritage: Helm
++    release: prometheus
++    chart: prometheus-node-exporter-2.2.0
++spec:
++  selector:
++    matchLabels:
++      app: prometheus-node-exporter
++      release: prometheus
++  updateStrategy:
++    rollingUpdate:
++      maxUnavailable: 1
++    type: RollingUpdate
++  template:
++    metadata:
++      labels:         
++        app: prometheus-node-exporter
++        heritage: Helm
++        release: prometheus
++        chart: prometheus-node-exporter-2.2.0
++      annotations:
++        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
++    spec:
++      automountServiceAccountToken: false
++      serviceAccountName: prometheus-prometheus-node-exporter
++      securityContext:
++        fsGroup: 65534
++        runAsGroup: 65534
++        runAsNonRoot: true
++        runAsUser: 65534
++      containers:
++        - name: node-exporter
++          image: "quay.io/prometheus/node-exporter:v1.2.2"
++          imagePullPolicy: IfNotPresent
++          args:
++            - --path.procfs=/host/proc
++            - --path.sysfs=/host/sys
++            - --path.rootfs=/host/root
++            - --web.listen-address=$(HOST_IP):9100
++          env:
++          - name: HOST_IP
++            value: 0.0.0.0
++          - name: TZ
++            value: Europe/Madrid
++          ports:
++            - name: metrics
++              containerPort: 9100
++              protocol: TCP
++          livenessProbe:
++            httpGet:
++              path: /
++              port: 9100
++          readinessProbe:
++            httpGet:
++              path: /
++              port: 9100
++          resources:
++            {}
++          volumeMounts:
++            - name: proc
++              mountPath: /host/proc
++              readOnly:  true
++            - name: sys
++              mountPath: /host/sys
++              readOnly: true
++            - name: root
++              mountPath: /host/root
++              mountPropagation: HostToContainer
++              readOnly: true
++      hostNetwork: true
++      hostPID: true
++      tolerations:
++        - effect: NoSchedule
++          operator: Exists
++      volumes:
++        - name: proc
++          hostPath:
++            path: /proc
++        - name: sys
++          hostPath:
++            path: /sys
++        - name: root
++          hostPath:
++            path: /
++---
++# Source: kube-state-metrics/templates/deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: prometheus-kube-state-metrics
++  namespace: istio-system
++  labels:
++    helm.sh/chart: kube-state-metrics-4.0.1
++    app.kubernetes.io/managed-by: Helm
++    app.kubernetes.io/component: metrics
++    app.kubernetes.io/part-of: kube-state-metrics
++    app.kubernetes.io/name: kube-state-metrics
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "2.2.0"
++spec:
++  selector:
++    matchLabels:
++      app.kubernetes.io/name: kube-state-metrics
++      app.kubernetes.io/instance: prometheus
++  replicas: 1
++  template:
++    metadata:
++      labels:
++        helm.sh/chart: kube-state-metrics-4.0.1
++        app.kubernetes.io/managed-by: Helm
++        app.kubernetes.io/component: metrics
++        app.kubernetes.io/part-of: kube-state-metrics
++        app.kubernetes.io/name: kube-state-metrics
++        app.kubernetes.io/instance: prometheus
++        app.kubernetes.io/version: "2.2.0"
++    spec:
++      hostNetwork: false
++      serviceAccountName: prometheus-kube-state-metrics
++      securityContext:
++        fsGroup: 65534
++        runAsGroup: 65534
++        runAsUser: 65534
++      containers:
++      - name: kube-state-metrics
++        args:
++        - --port=8080
++        - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments
++        - --telemetry-port=8081
++        imagePullPolicy: IfNotPresent
++        image: "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.2.0"
++        env:
++          - name: TZ
++            value: Europe/Madrid
++        ports:
++        - containerPort: 8080
++          name: "http"
++        livenessProbe:
++          httpGet:
++            path: /healthz
++            port: 8080
++          initialDelaySeconds: 5
++          timeoutSeconds: 5
++        readinessProbe:
++          httpGet:
++            path: /
++            port: 8080
++          initialDelaySeconds: 5
++          timeoutSeconds: 5
++      imagePullSecrets:
++        - name: regcred
++---
++# Source: alertmanager/templates/statefulset.yaml
++apiVersion: apps/v1
++kind: StatefulSet
++metadata:
++  name: prometheus-alertmanager
++  labels:
++    helm.sh/chart: alertmanager-0.14.0
++    app.kubernetes.io/name: alertmanager
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "v0.23.0"
++    app.kubernetes.io/managed-by: Helm
++spec:
++  replicas: 1
++  selector:
++    matchLabels:
++      app.kubernetes.io/name: alertmanager
++      app.kubernetes.io/instance: prometheus
++  serviceName: prometheus-alertmanager-headless
++  template:
++    metadata:
++      labels:
++        app.kubernetes.io/name: alertmanager
++        app.kubernetes.io/instance: prometheus
++      annotations:
++        checksum/config: 1fc7a9774faff989886af66f50ebd5bb7666ba144728e87aef25e4fbd9af9276
++    spec:
++      imagePullSecrets:
++        - name: regcred
++      serviceAccountName: prometheus-alertmanager
++      securityContext:
++        fsGroup: 65534
++      containers:
++        - name: alertmanager
++          securityContext:
++            runAsGroup: 65534
++            runAsNonRoot: true
++            runAsUser: 65534
++          image: "quay.io/prometheus/alertmanager:v0.23.0"
++          imagePullPolicy: IfNotPresent
++          env:
++            - name: TZ
++              value: Europe/Madrid
++            - name: POD_IP
++              valueFrom:
++                fieldRef:
++                  apiVersion: v1
++                  fieldPath: status.podIP
++          args:
++            - --storage.path=/alertmanager
++            - --config.file=/etc/alertmanager/alertmanager.yml
++          ports:
++            - name: http
++              containerPort: 9093
++              protocol: TCP
++          livenessProbe:
++            httpGet:
++              path: /
++              port: http
++          readinessProbe:
++            httpGet:
++              path: /
++              port: http
++          resources:
++            {}
++          volumeMounts:
++            - name: config
++              mountPath: /etc/alertmanager
++            - name: storage
++              mountPath: /alertmanager
++      volumes:
++        - name: config
++          configMap:
++            name: prometheus-alertmanager
++  volumeClaimTemplates:
++    - metadata:
++        name: storage
++      spec:
++        accessModes:
++          - ReadWriteOnce
++        resources:
++          requests:
++            storage: 50Mi
++        storageClassName: longhorn
++---
++# Source: prometheus-pushgateway/templates/deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: prometheus-prometheus-pushgateway
++  labels:
++    app: prometheus-pushgateway
++    chart: prometheus-pushgateway-1.13.0
++    heritage: Helm
++    release: prometheus
++spec:
++  replicas: 1
++  strategy:
++    type: Recreate
++  selector:
++    matchLabels:
++      app: prometheus-pushgateway
++      release: prometheus
++  template:
++    metadata:
++      labels:
++        app: prometheus-pushgateway
++        release: prometheus
++      annotations:
++        {}
++    spec:
++      serviceAccountName: prometheus-prometheus-pushgateway
++      imagePullSecrets:
++        - name: regcred
++      containers:
++        - name: pushgateway
++          image: "prom/pushgateway:v1.4.1"
++          imagePullPolicy: IfNotPresent
++          env:
++            - name: TZ
++              value: Europe/Madrid
++          ports:
++            - name: metrics
++              containerPort: 9091
++              protocol: TCP
++          livenessProbe:
++            httpGet:
++              path: /-/healthy
++              port: 9091
++            initialDelaySeconds: 10
++            timeoutSeconds: 10
++          readinessProbe:
++            httpGet:
++              path: /-/ready
++              port: 9091
++            initialDelaySeconds: 10
++            timeoutSeconds: 10
++          resources:
++            {}
++          volumeMounts:
++            - name: storage-volume
++              mountPath: "/data"
++              subPath: ""
++      securityContext:
++        fsGroup: 65534
++        runAsNonRoot: true
++        runAsUser: 65534
++      volumes:
++        - name: storage-volume
++          emptyDir: {}
++---
+ # Source: prometheus/templates/server/deploy.yaml
+ apiVersion: apps/v1
+ kind: Deployment
+@@ -413,7 +1181,6 @@ spec:
+         release: prometheus
+         chart: prometheus-14.6.1
+         heritage: Helm
+-        
+         sidecar.istio.io/inject: "false"
+     spec:
+       enableServiceLinks: true
+@@ -422,6 +1189,9 @@ spec:
+         - name: prometheus-server-configmap-reload
+           image: "jimmidyson/configmap-reload:v0.5.0"
+           imagePullPolicy: "IfNotPresent"
++          env:
++            - name: TZ
++              value: Europe/Madrid
+           args:
+             - --volume-dir=/etc/config
+             - --webhook-url=http://127.0.0.1:9090/-/reload
+@@ -433,8 +1203,11 @@ spec:
+               readOnly: true
+ 
+         - name: prometheus-server
+-          image: "prom/prometheus:v2.26.0"
++          image: "prom/prometheus:v2.31.0"
+           imagePullPolicy: "IfNotPresent"
++          env:
++            - name: TZ
++              value: Europe/Madrid
+           args:
+             - --storage.tsdb.retention.time=15d
+             - --config.file=/etc/config/prometheus.yml
+@@ -485,3 +1258,24 @@ spec:
+         - name: storage-volume
+           emptyDir:
+             {}
++---
++# Source: alertmanager/templates/tests/test-connection.yaml
++apiVersion: v1
++kind: Pod
++metadata:
++  name: "prometheus-alertmanager-test-connection"
++  labels:
++    helm.sh/chart: alertmanager-0.14.0
++    app.kubernetes.io/name: alertmanager
++    app.kubernetes.io/instance: prometheus
++    app.kubernetes.io/version: "v0.23.0"
++    app.kubernetes.io/managed-by: Helm
++  annotations:
++    "helm.sh/hook": test-success
++spec:
++  containers:
++    - name: wget
++      image: busybox
++      command: ['wget']
++      args: ['prometheus-alertmanager:9093']
++  restartPolicy: Never
+diff --git a/samples/addons/selenium-grid.yaml b/samples/addons/selenium-grid.yaml
+new file mode 100644
+index 0000000000..2430020c85
+--- /dev/null
++++ b/samples/addons/selenium-grid.yaml
+@@ -0,0 +1,510 @@
++---
++# Source: selenium-grid/templates/event-bus-configmap.yaml
++apiVersion: v1
++kind: ConfigMap
++metadata:
++  name: selenium-event-bus-config
++  labels:
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++data:
++  SE_EVENT_BUS_HOST: selenium-event-bus
++  SE_EVENT_BUS_PUBLISH_PORT: "4442"
++  SE_EVENT_BUS_SUBSCRIBE_PORT: "4443"
++---
++# Source: selenium-grid/templates/chrome-node-service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: selenium-chrome-node
++  labels:
++    name: selenium-chrome-node
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  selector:
++    app: selenium-chrome-node
++  ports:
++    - name: tcp-chrome
++      protocol: TCP
++      port: 6900
++      targetPort: 5900
++---
++# Source: selenium-grid/templates/distributor-service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: selenium-distributor
++  labels:
++    app: selenium-distributor
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  selector:
++    app: selenium-distributor
++  type: ClusterIP
++  ports:
++    - name: tcp-dist
++      protocol: TCP
++      port: 5553
++      targetPort: 5553
++---
++# Source: selenium-grid/templates/event-bus-service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: selenium-event-bus
++  labels:
++    app: selenium-event-bus
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  selector:
++    app: selenium-event-bus
++  type: ClusterIP
++  ports:
++    - name: http-evtbus
++      protocol: TCP
++      port: 5557
++      targetPort: 5557
++    - name: tcp-evtbus-pub
++      protocol: TCP
++      port: 4442
++      targetPort: 4442
++    - name: tcp-evtbus-sub
++      protocol: TCP
++      port: 4443
++      targetPort: 4443
++---
++# Source: selenium-grid/templates/firefox-node-service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: selenium-firefox-node
++  labels:
++    name: selenium-firefox-node
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  selector:
++    app: selenium-firefox-node
++  ports:
++    - name: tcp-firefox
++      protocol: TCP
++      port: 6900
++      targetPort: 5900
++---
++# Source: selenium-grid/templates/opera-node-service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: selenium-opera-node
++  labels:
++    name: selenium-opera-node
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  selector:
++    app: selenium-opera-node
++  ports:
++    - name: tcp-opera
++      protocol: TCP
++      port: 6900
++      targetPort: 5900
++---
++# Source: selenium-grid/templates/router-service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: selenium-router
++  labels:
++    app: selenium-router
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  selector:
++    app: selenium-router
++  type: NodePort
++  ports:
++    - name: tcp-router
++      protocol: TCP
++      port: 4444
++      targetPort: 4444
++---
++# Source: selenium-grid/templates/session-map-service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: selenium-session-map
++  labels:
++    app: selenium-session-map
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  selector:
++    app: selenium-session-map
++  type: ClusterIP
++  ports:
++    - name: tcp-ssn-map
++      protocol: TCP
++      port: 5556
++      targetPort: 5556
++---
++# Source: selenium-grid/templates/session-queuer-service.yaml
++apiVersion: v1
++kind: Service
++metadata:
++  name: selenium-session-queuer
++  labels:
++    app: selenium-session-queuer
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  selector:
++    app: selenium-session-queuer
++  type: ClusterIP
++  ports:
++    - name: tcp-ssn-que
++      protocol: TCP
++      port: 5559
++      targetPort: 5559
++---
++# Source: selenium-grid/templates/chrome-node-deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: selenium-chrome-node
++  labels: &chrome_node_labels
++    app: selenium-chrome-node
++    app.kubernetes.io/name: selenium-chrome-node
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  replicas: 1
++  selector:
++    matchLabels:
++      app: selenium-chrome-node
++  template:
++    metadata:
++      labels: *chrome_node_labels
++      annotations:
++        checksum/event-bus-configmap: 3e74d02da87de8f2c78a1f7a003822de18e13182488feb2103af61d649e52fa2
++    spec:
++      imagePullSecrets:
++        - name: regcred
++      containers:
++        - name: selenium-chrome-node
++          image: alvarogg777/node-chromium:4.0.0-20211108
++          imagePullPolicy: IfNotPresent
++          envFrom:
++            - configMapRef:
++                name: selenium-event-bus-config
++          ports:
++            - containerPort: 5553
++              protocol: TCP
++          volumeMounts:
++            - name: dshm
++              mountPath: /dev/shm
++          resources:
++            limits:
++              cpu: "1"
++              memory: 2Gi
++            requests:
++              cpu: "1"
++              memory: 2Gi
++      volumes:
++        - name: dshm
++          emptyDir: { "medium": "Memory" }
++---
++# Source: selenium-grid/templates/distributor-deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: selenium-distributor
++  labels: &distributor_labels
++    app: selenium-distributor
++    app.kubernetes.io/name: selenium-distributor
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  replicas: 1
++  selector:
++    matchLabels:
++      app: selenium-distributor
++  template:
++    metadata:
++      labels: *distributor_labels
++    spec:
++      imagePullSecrets:
++        - name: regcred
++      containers:
++        - name: selenium-distributor
++          image: alvarogg777/distributor:4.0.0-20211108
++          imagePullPolicy: IfNotPresent
++          env:
++            - name: SE_SESSIONS_MAP_HOST
++              value: selenium-session-map
++            - name: SE_SESSIONS_MAP_PORT
++              value: "5556"
++            - name: SE_SESSION_QUEUER_HOST
++              value: selenium-session-queuer
++            - name: SE_SESSION_QUEUER_PORT
++              value: "5559"
++          envFrom:
++            - configMapRef:
++                name: selenium-event-bus-config
++          ports:
++            - containerPort: 5553
++              protocol: TCP
++---
++# Source: selenium-grid/templates/event-bus-deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: selenium-event-bus
++  labels: &event_bus_labels
++    app: selenium-event-bus
++    app.kubernetes.io/name: selenium-event-bus
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  replicas: 1
++  selector:
++    matchLabels:
++      app: selenium-event-bus
++  template:
++    metadata:
++      labels: *event_bus_labels
++    spec:
++      imagePullSecrets:
++        - name: regcred
++      containers:
++        - name: selenium-event-bus
++          image: alvarogg777/event-bus:4.0.0-20211108
++          imagePullPolicy: IfNotPresent
++          ports:
++            - containerPort: 5557
++              protocol: TCP
++            - containerPort: 4442
++              protocol: TCP
++            - containerPort: 4443
++              protocol: TCP
++---
++# Source: selenium-grid/templates/firefox-node-deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: selenium-firefox-node
++  labels: &firefox_node_labels
++    app: selenium-firefox-node
++    app.kubernetes.io/name: selenium-firefox-node
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  replicas: 1
++  selector:
++    matchLabels:
++      app: selenium-firefox-node
++  template:
++    metadata:
++      labels: *firefox_node_labels
++      annotations:
++        checksum/event-bus-configmap: 3e74d02da87de8f2c78a1f7a003822de18e13182488feb2103af61d649e52fa2
++    spec:
++      imagePullSecrets: 
++        - name: regcred
++      containers:
++        - name: selenium-firefox-node
++          image: alvarogg777/node-firefox:4.0.0-20211108
++          imagePullPolicy: IfNotPresent
++          envFrom:
++            - configMapRef:
++                name: selenium-event-bus-config
++          ports:
++            - containerPort: 5553
++              protocol: TCP
++          volumeMounts:
++            - name: dshm
++              mountPath: /dev/shm
++          resources:
++            limits:
++              cpu: "1"
++              memory: 2Gi
++            requests:
++              cpu: "1"
++              memory: 2Gi
++      volumes:
++        - name: dshm
++          emptyDir: { "medium": "Memory" }
++---
++# Source: selenium-grid/templates/router-deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: selenium-router
++  labels: &router_labels
++    app: selenium-router
++    app.kubernetes.io/name: selenium-router
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  replicas: 1
++  selector:
++    matchLabels:
++      app: selenium-router
++  template:
++    metadata:
++      labels: *router_labels
++    spec:
++      imagePullSecrets:
++        - name: regcred
++      containers:
++        - name: selenium-router
++          image: alvarogg777/router:4.0.0-20211108
++          imagePullPolicy: IfNotPresent
++          env:
++            - name: SE_DISTRIBUTOR_HOST
++              value: selenium-distributor
++            - name: SE_DISTRIBUTOR_PORT
++              value: "5553"
++            - name: SE_SESSIONS_MAP_HOST
++              value: selenium-session-map
++            - name: SE_SESSIONS_MAP_PORT
++              value: "5556"
++            - name: SE_SESSION_QUEUER_HOST
++              value: selenium-session-queuer
++            - name: SE_SESSION_QUEUER_PORT
++              value: "5559"
++          ports:
++            - containerPort: 4444
++              protocol: TCP
++          livenessProbe:
++            httpGet:
++              path: /status
++              port: 4444
++            initialDelaySeconds: 10
++            periodSeconds: 10
++            timeoutSeconds: 10
++            successThreshold: 1
++            failureThreshold: 10
++          readinessProbe:
++            httpGet:
++              path: /status
++              port: 4444
++            initialDelaySeconds: 12
++            periodSeconds: 10
++            timeoutSeconds: 10
++            successThreshold: 1
++            failureThreshold: 10
++---
++# Source: selenium-grid/templates/session-map-deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: selenium-session-map
++  labels: &session_map_labels
++    app: selenium-session-map
++    app.kubernetes.io/name: selenium-session-map
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  replicas: 1
++  selector:
++    matchLabels:
++      app: selenium-session-map
++  template:
++    metadata:
++      labels: *session_map_labels
++    spec:
++      imagePullSecrets:
++        - name: regcred
++      containers:
++        - name: selenium-session-map
++          image: alvarogg777/sessions:4.0.0-20211108
++          imagePullPolicy: IfNotPresent
++          envFrom:
++            - configMapRef:
++                name: selenium-event-bus-config
++          ports:
++            - containerPort: 5556
++              protocol: TCP
++---
++# Source: selenium-grid/templates/session-queuer-deployment.yaml
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: selenium-session-queuer
++  labels: &session_queuer_labels
++    app: selenium-session-queuer
++    app.kubernetes.io/name: selenium-session-queuer
++    app.kubernetes.io/managed-by: helm
++    app.kubernetes.io/instance: selenium-grid
++    app.kubernetes.io/version: 4.0.0
++    app.kubernetes.io/component: selenium-grid-4.0.0
++    helm.sh/chart: selenium-grid-0.1.0
++spec:
++  replicas: 1
++  selector:
++    matchLabels:
++      app: selenium-session-queuer
++  template:
++    metadata:
++      labels: *session_queuer_labels
++    spec:
++      imagePullSecrets:
++        - name: regcred
++      containers:
++        - name: selenium-session-queuer
++          image: alvarogg777/session-queue:4.0.0-20211108
++          imagePullPolicy: IfNotPresent
++          envFrom:
++            - configMapRef:
++                name: selenium-event-bus-config
++          ports:
++            - containerPort: 5559
++              protocol: TCP
