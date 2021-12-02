@@ -174,13 +174,13 @@ spec:
       port: 5556
       targetPort: 5556
 ---
-# Source: selenium-grid/templates/session-queuer-service.yaml
+# Source: selenium-grid/templates/session-queue-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: selenium-session-queuer
+  name: selenium-session-queue
   labels:
-    app: selenium-session-queuer
+    app: selenium-session-queue
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
     app.kubernetes.io/version: 4.0.0
@@ -188,7 +188,7 @@ metadata:
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   selector:
-    app: selenium-session-queuer
+    app: selenium-session-queue
   type: ClusterIP
   ports:
     - name: tcp-ssn-que
@@ -280,7 +280,7 @@ spec:
             - name: SE_SESSIONS_MAP_PORT
               value: "5556"
             - name: SE_SESSION_QUEUE_HOST
-              value: selenium-session-queuer
+              value: selenium-session-queue
             - name: SE_SESSION_QUEUE_PORT
               value: "5559"
           envFrom:
@@ -414,7 +414,7 @@ spec:
             - name: SE_SESSIONS_MAP_PORT
               value: "5556"
             - name: SE_SESSION_QUEUE_HOST
-              value: selenium-session-queuer
+              value: selenium-session-queue
             - name: SE_SESSION_QUEUE_PORT
               value: "5559"
           ports:
@@ -474,14 +474,14 @@ spec:
             - containerPort: 5556
               protocol: TCP
 ---
-# Source: selenium-grid/templates/session-queuer-deployment.yaml
+# Source: selenium-grid/templates/session-queue-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: selenium-session-queuer
-  labels: &session_queuer_labels
-    app: selenium-session-queuer
-    app.kubernetes.io/name: selenium-session-queuer
+  name: selenium-session-queue
+  labels: &session_queue_labels
+    app: selenium-session-queue
+    app.kubernetes.io/name: selenium-session-queue
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
     app.kubernetes.io/version: 4.0.0
@@ -491,15 +491,15 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: selenium-session-queuer
+      app: selenium-session-queue
   template:
     metadata:
-      labels: *session_queuer_labels
+      labels: *session_queue_labels
     spec:
       imagePullSecrets:
         - name: regcred
       containers:
-        - name: selenium-session-queuer
+        - name: selenium-session-queue
           image: alvarogg777/session-queue:4.1.0-20211202
           imagePullPolicy: IfNotPresent
           envFrom:
