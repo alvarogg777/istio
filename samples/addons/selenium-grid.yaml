@@ -355,7 +355,7 @@ spec:
       containers:
         - name: selenium-firefox-node
           image: alvarogg777/node-firefox:4.1.0-20211123
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: selenium-event-bus-config
