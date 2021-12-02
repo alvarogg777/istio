@@ -224,7 +224,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-chrome-node
-          image: alvarogg777/node-chromium:4.1.0-20211126
+          image: alvarogg777/node-chromium:4.1.0-20211202
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -272,16 +272,16 @@ spec:
         - name: regcred
       containers:
         - name: selenium-distributor
-          image: alvarogg777/distributor:4.1.0-20211126
+          image: alvarogg777/distributor:4.1.0-20211202
           imagePullPolicy: IfNotPresent
           env:
             - name: SE_SESSIONS_MAP_HOST
               value: selenium-session-map
             - name: SE_SESSIONS_MAP_PORT
               value: "5556"
-            - name: SE_SESSION_QUEUE_HOST
+            - name: SE_SESSION_QUEUER_HOST
               value: selenium-session-queuer
-            - name: SE_SESSION_QUEUE_PORT
+            - name: SE_SESSION_QUEUER_PORT
               value: "5559"
           envFrom:
             - configMapRef:
@@ -316,7 +316,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-event-bus
-          image: alvarogg777/event-bus:4.1.0-20211126
+          image: alvarogg777/event-bus:4.1.0-20211202
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5557
@@ -354,7 +354,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-firefox-node
-          image: alvarogg777/node-firefox:4.1.0-20211126
+          image: alvarogg777/node-firefox:4.1.0-20211202
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -402,7 +402,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-router
-          image: alvarogg777/router:4.1.0-20211126
+          image: alvarogg777/router:4.1.0-20211202
           imagePullPolicy: IfNotPresent
           env:
             - name: SE_DISTRIBUTOR_HOST
@@ -413,9 +413,9 @@ spec:
               value: selenium-session-map
             - name: SE_SESSIONS_MAP_PORT
               value: "5556"
-            - name: SE_SESSION_QUEUE_HOST
+            - name: SE_SESSION_QUEUER_HOST
               value: selenium-session-queuer
-            - name: SE_SESSION_QUEUE_PORT
+            - name: SE_SESSION_QUEUER_PORT
               value: "5559"
           ports:
             - containerPort: 4444
@@ -465,7 +465,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-session-map
-          image: alvarogg777/sessions:4.1.0-20211126
+          image: alvarogg777/sessions:4.1.0-20211202
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -500,7 +500,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-session-queuer
-          image: alvarogg777/session-queue:4.1.0-20211126
+          image: alvarogg777/session-queue:4.1.0-20211202
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
