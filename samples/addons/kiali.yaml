@@ -94,6 +94,7 @@ data:
         in_cluster_url: "http://grafana.istio-system.svc.cluster.local:3000"
       tracing:
         in_cluster_url: "http://tracing.istio-system.svc.cluster.local:16685"
+        use_grpc: true
         service: "tracing"
         url: http://tracing.alboroto.live
       prometheus:
