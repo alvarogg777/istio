@@ -197,6 +197,8 @@ spec:
               value: "changeme" # "-"
             - name: "GF_SECURITY_ADMIN_USER"
               value: "alboroto" # "-"
+            - name: GF_INSTALL_PLUGINS
+              value: abhisant-druid-datasource
           livenessProbe:
             failureThreshold: 10
             httpGet:
