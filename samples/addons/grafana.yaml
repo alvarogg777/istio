@@ -47,12 +47,12 @@ data:
     enabled = true
     name = Oauth
     allow_sign_up = true
-    client_id = account
-    client_secret = 1f787119-4429-4d6d-928c-93c650c7a73a
+    client_id = grafana.alboroto.live
+    client_secret = 857210d5-052f-437a-84c3-555773baa7e7
     auth_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/auth
     token_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/token
     api_url = https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/userinfo
-    scopes = openid profile email
+    scopes = profile email
 
   datasources.yaml: |
     apiVersion: 1
@@ -154,9 +154,9 @@ spec:
           image: "grafana/grafana:8.1.2"
           imagePullPolicy: IfNotPresent
           volumeMounts:
-            - name: config
-              mountPath: "/etc/grafana/grafana.ini"
-              subPath: grafana.ini
+            # - name: config
+            #   mountPath: "/etc/grafana/grafana.ini"
+            #   subPath: grafana.ini
             - name: storage
               mountPath: "/var/lib/grafana"
             - name: dashboards-istio
@@ -187,18 +187,45 @@ spec:
               value: /var/lib/grafana/plugins
             - name: GF_PATHS_PROVISIONING
               value: /etc/grafana/provisioning
-            - name: "GF_AUTH_ANONYMOUS_ENABLED"
-              value: "true"
-            - name: "GF_AUTH_ANONYMOUS_ORG_ROLE"
-              value: "Admin"
+            # - name: "GF_AUTH_ANONYMOUS_ENABLED"
+            #   value: "true"
+            # - name: "GF_AUTH_ANONYMOUS_ORG_ROLE"
+            #   value: "Admin"
             - name: "GF_AUTH_BASIC_ENABLED"
               value: "false"
-            - name: "GF_SECURITY_ADMIN_PASSWORD"
-              value: "changeme" # "-"
-            - name: "GF_SECURITY_ADMIN_USER"
-              value: "alboroto" # "-"
-            - name: GF_INSTALL_PLUGINS
-              value: abhisant-druid-datasource
+            # - name: "GF_SECURITY_ADMIN_PASSWORD"
+            #   value: "changeme" # "-"
+            # - name: "GF_SECURITY_ADMIN_USER"
+            #   value: "alboroto" # "-"
+            # - name: GF_INSTALL_PLUGINS
+              # value: abhisant-druid-datasource
+            - name: GF_SERVER_DOMAIN
+              value: "grafana.alboroto.live"
+            - name: GF_SERVER_ROOT_URL
+              value: "https://grafana.alboroto.live"
+            - name: GF_AUTH_GENERIC_OAUTH_ENABLED
+              value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_NAME
+              value: "Login Keycloak"
+            - name: GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP
+              value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+              value: "grafana.alboroto.live"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: grafanaoidc
+                  key: oidc-secret
+            - name: GF_AUTH_GENERIC_OAUTH_SCOPES
+              value: profile
+            - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
+              value: "https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/auth"
+            - name:  GF_AUTH_GENERIC_OAUTH_TOKEN_URL
+              value: "https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/token"
+            - name: GF_AUTH_GENERIC_OAUTH_API_URL
+              value: "https://kc.alboroto.live/auth/realms/alborotoproject/protocol/openid-connect/userinfo"
+            - name: GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH
+              value: "contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'"
           livenessProbe:
             failureThreshold: 10
             httpGet:
