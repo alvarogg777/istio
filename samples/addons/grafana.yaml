@@ -202,7 +202,7 @@ spec:
             - name: GF_SERVER_DOMAIN
               value: "grafana.alboroto.live"
             - name: GF_SERVER_ROOT_URL
-              value: "https://grafana.alboroto.live"
+              value: "http://grafana.alboroto.live"
             - name: GF_AUTH_GENERIC_OAUTH_ENABLED
               value: "true"
             - name: GF_AUTH_GENERIC_OAUTH_NAME
