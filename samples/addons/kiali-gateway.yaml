@@ -1,0 +1,62 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: kiali-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http-kiali
+      protocol: HTTP
+    # https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings
+    tls:
+      httpsRedirect: false
+    hosts:
+    - kiali.alboroto.live
+  - port:
+      number: 443
+      name: https-kiali
+      protocol: HTTPS
+    tls: {}
+    hosts:
+    - kiali.alboroto.live
+...
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: kiali-virtualservice
+  namespace: istio-system
+spec:
+  gateways:
+  - kiali-gateway
+  hosts:
+  - kiali.alboroto.live
+  http:
+  - headers:
+      request:
+        set:
+          X-Forwarded-Port: "80"
+    route:
+    - destination:
+        host: kiali.istio-system.svc.cluster.local
+        port:
+          number: 20001
+      weight: 100
+...
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: kiali-destinationrule
+  namespace: istio-system
+spec:
+  host: kiali
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+...

@@ -84,9 +84,9 @@ data:
           }
         },
         "externalIstiod": false,
-        "hub": "gcr.io/istio-testing",
+        "hub": "docker.io/querycapistio",
         "imagePullPolicy": "",
-        "imagePullSecrets": [],
+        "imagePullSecrets": "regcred",
         "istioNamespace": "istio-system",
         "istiod": {
           "enableAnalysis": false
@@ -162,7 +162,7 @@ data:
         "sts": {
           "servicePort": 0
         },
-        "tag": "latest",
+        "tag": "1.12.1",
         "tracer": {
           "datadog": {
             "address": "$(HOST_IP):8126"
@@ -427,6 +427,8 @@ data:
             - name: REWRITE_PROBE_LEGACY_LOCALHOST_DESTINATION
               value: "true"
             {{- end }}
+            - name: TZ
+              value: Europe/Madrid
             - name: JWT_POLICY
               value: {{ .Values.global.jwtPolicy }}
             - name: PILOT_CERT_PROVIDER
@@ -1554,7 +1556,7 @@ spec:
         fsGroup: 1337
       containers:
         - name: discovery
-          image: "gcr.io/istio-testing/pilot:latest"
+          image: "docker.io/querycapistio/pilot:1.12.1"
           args:
           - "discovery"
           - --monitoringAddr=:15014

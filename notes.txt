@@ -1,0 +1,15 @@
+# diff notes
+cd argo production/
+grep -r path production | grep istio # (list all istio-paths for argo deployment)
+currentbranch=$currentpatch
+git fetch upstream;  git checkout tags/release-X.XX ; git checkout -b patch-X.XX.X
+git diff master..patch-X.XX.X |grep 'a/$istio-path' |less
+cd ../istio.arm; git checkout $currentbranch
+meld istio istio.arm (open each result from prev list and look for querycap)
+check rest of kustomize.yaml resources to be deployed on new branch upstreamed
+
+metrics
+helm template -nistio-system prometheus prometheus-community/alertmanager --set imagePullSecrets="regcred",persistence.storageClass="longhorn" > alertmanager.yaml
+helm template -nistio-system prometheus prometheus-community/prometheus-node-exporter --set imagePullSecrets=regcred > node-exporter.yaml
+helm template -nistio-system prometheus prometheus-community/prometheus-pushgateway --set imagePullSecrets=regcred > pushgateway.yaml
+helm template -nistio-system prometheus prometheus-community/kube-state-metrics --set imagePullSecrets=regcred > state-metrics.yaml
