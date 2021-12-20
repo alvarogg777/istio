@@ -225,7 +225,7 @@ spec:
       containers:
         - name: selenium-chrome-node
           image: alvarogg777/node-chromium:4.1.1-20211220
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: selenium-event-bus-config
