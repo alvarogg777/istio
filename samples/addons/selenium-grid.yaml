@@ -88,48 +88,48 @@ spec:
       port: 4443
       targetPort: 4443
 ---
-# Source: selenium-grid/templates/firefox-node-service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: selenium-firefox-node
-  labels:
-    name: selenium-firefox-node
-    app.kubernetes.io/managed-by: helm
-    app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.1
-    app.kubernetes.io/component: selenium-grid-4.1.1
-    helm.sh/chart: selenium-grid-0.1.0
-spec:
-  selector:
-    app: selenium-firefox-node
-  ports:
-    - name: tcp-firefox
-      protocol: TCP
-      port: 6900
-      targetPort: 5900
----
+# # Source: selenium-grid/templates/firefox-node-service.yaml
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: selenium-firefox-node
+#   labels:
+#     name: selenium-firefox-node
+#     app.kubernetes.io/managed-by: helm
+#     app.kubernetes.io/instance: selenium-grid
+#     app.kubernetes.io/version: 4.1.1
+#     app.kubernetes.io/component: selenium-grid-4.1.1
+#     helm.sh/chart: selenium-grid-0.1.0
+# spec:
+#   selector:
+#     app: selenium-firefox-node
+#   ports:
+#     - name: tcp-firefox
+#       protocol: TCP
+#       port: 6900
+#       targetPort: 5900
+# ---
 # Source: selenium-grid/templates/opera-node-service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: selenium-opera-node
-  labels:
-    name: selenium-opera-node
-    app.kubernetes.io/managed-by: helm
-    app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.1
-    app.kubernetes.io/component: selenium-grid-4.1.1
-    helm.sh/chart: selenium-grid-0.1.0
-spec:
-  selector:
-    app: selenium-opera-node
-  ports:
-    - name: tcp-opera
-      protocol: TCP
-      port: 6900
-      targetPort: 5900
----
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: selenium-opera-node
+#   labels:
+#     name: selenium-opera-node
+#     app.kubernetes.io/managed-by: helm
+#     app.kubernetes.io/instance: selenium-grid
+#     app.kubernetes.io/version: 4.1.1
+#     app.kubernetes.io/component: selenium-grid-4.1.1
+#     helm.sh/chart: selenium-grid-0.1.0
+# spec:
+#   selector:
+#     app: selenium-opera-node
+#   ports:
+#     - name: tcp-opera
+#       protocol: TCP
+#       port: 6900
+#       targetPort: 5900
+# ---
 # Source: selenium-grid/templates/router-service.yaml
 apiVersion: v1
 kind: Service
@@ -210,7 +210,7 @@ metadata:
     app.kubernetes.io/component: selenium-grid-4.1.1
     helm.sh/chart: selenium-grid-0.1.0
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: selenium-chrome-node
@@ -326,56 +326,56 @@ spec:
             - containerPort: 4443
               protocol: TCP
 ---
-# Source: selenium-grid/templates/firefox-node-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: selenium-firefox-node
-  labels: &firefox_node_labels
-    app: selenium-firefox-node
-    app.kubernetes.io/name: selenium-firefox-node
-    app.kubernetes.io/managed-by: helm
-    app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.1
-    app.kubernetes.io/component: selenium-grid-4.1.1
-    helm.sh/chart: selenium-grid-0.1.0
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: selenium-firefox-node
-  template:
-    metadata:
-      labels: *firefox_node_labels
-      annotations:
-        checksum/event-bus-configmap: 3e74d02da87de8f2c78a1f7a003822de18e13182488feb2103af61d649e52fa2
-    spec:
-      imagePullSecrets: 
-        - name: regcred
-      containers:
-        - name: selenium-firefox-node
-          image: alvarogg777/node-firefox:4.1.1-20211220
-          imagePullPolicy: IfNotPresent
-          envFrom:
-            - configMapRef:
-                name: selenium-event-bus-config
-          ports:
-            - containerPort: 5553
-              protocol: TCP
-          volumeMounts:
-            - name: dshm
-              mountPath: /dev/shm
-          resources:
-            limits:
-              cpu: "1"
-              memory: 2Gi
-            requests:
-              cpu: "1"
-              memory: 2Gi
-      volumes:
-        - name: dshm
-          emptyDir: { "medium": "Memory" }
----
+# # Source: selenium-grid/templates/firefox-node-deployment.yaml
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: selenium-firefox-node
+#   labels: &firefox_node_labels
+#     app: selenium-firefox-node
+#     app.kubernetes.io/name: selenium-firefox-node
+#     app.kubernetes.io/managed-by: helm
+#     app.kubernetes.io/instance: selenium-grid
+#     app.kubernetes.io/version: 4.1.1
+#     app.kubernetes.io/component: selenium-grid-4.1.1
+#     helm.sh/chart: selenium-grid-0.1.0
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: selenium-firefox-node
+#   template:
+#     metadata:
+#       labels: *firefox_node_labels
+#       annotations:
+#         checksum/event-bus-configmap: 3e74d02da87de8f2c78a1f7a003822de18e13182488feb2103af61d649e52fa2
+#     spec:
+#       imagePullSecrets: 
+#         - name: regcred
+#       containers:
+#         - name: selenium-firefox-node
+#           image: alvarogg777/node-firefox:4.1.1-20211220
+#           imagePullPolicy: IfNotPresent
+#           envFrom:
+#             - configMapRef:
+#                 name: selenium-event-bus-config
+#           ports:
+#             - containerPort: 5553
+#               protocol: TCP
+#           volumeMounts:
+#             - name: dshm
+#               mountPath: /dev/shm
+#           resources:
+#             limits:
+#               cpu: "1"
+#               memory: 2Gi
+#             requests:
+#               cpu: "1"
+#               memory: 2Gi
+#       volumes:
+#         - name: dshm
+#           emptyDir: { "medium": "Memory" }
+# ---
 # Source: selenium-grid/templates/router-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
