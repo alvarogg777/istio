@@ -40,7 +40,7 @@ data:
         insecure_skip_verify_tls: true
         client_id: "kiali.alboroto.live"
         disable_rbac: true
-        client_secret: 946d47ab-40f5-455b-9d46-b0545eddd61c
+        client_secret: d5790c68-6d17-4805-94e6-7c82528b9e23
         issuer_uri: "https://kc.alboroto.live/auth/realms/alborotoproject"
         scopes: ["openid"]
         username_claim: "sub"
