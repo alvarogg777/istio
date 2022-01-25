@@ -1,7 +1,7 @@
 # diff notes
 cd argo production/
 grep -r path production | grep istio # (list all istio-paths for argo deployment)
-currentbranch=$currentpatch
+currentbranch=`git rev-parse --abbrev-ref HEAD`
 git fetch upstream;  git checkout tags/release-X.XX ; git checkout -b patch-X.XX.X
 git diff master..patch-X.XX.X |grep 'a/$istio-path' |less
 cd ../istio.arm; git checkout $currentbranch
