@@ -22,7 +22,7 @@ spec:
         - name: regcred
       containers:
         - name: jaeger
-          image: "docker.io/jaegertracing/all-in-one:1.29.0"
+          image: "docker.io/jaegertracing/all-in-one:1.30.0"
           env:
             - name: TZ
               value: Europe/Madrid

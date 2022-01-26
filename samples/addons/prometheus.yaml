@@ -896,7 +896,7 @@ spec:
         runAsUser: 65534
       containers:
         - name: node-exporter
-          image: "quay.io/prometheus/node-exporter:v1.2.2"
+          image: "quay.io/prometheus/node-exporter:v1.3.1"
           imagePullPolicy: IfNotPresent
           args:
             - --path.procfs=/host/proc
@@ -993,7 +993,7 @@ spec:
         - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments
         - --telemetry-port=8081
         imagePullPolicy: IfNotPresent
-        image: "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.2.0"
+        image: "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.3.0"
         env:
           - name: TZ
             value: Europe/Madrid
@@ -1130,7 +1130,7 @@ spec:
         - name: regcred
       containers:
         - name: pushgateway
-          image: "prom/pushgateway:v1.4.1"
+          image: "prom/pushgateway:v1.4.2"
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
@@ -1198,7 +1198,7 @@ spec:
       serviceAccountName: prometheus
       containers:
         - name: prometheus-server-configmap-reload
-          image: "jimmidyson/configmap-reload:v0.5.0"
+          image: "jimmidyson/configmap-reload:v0.6.1"
           imagePullPolicy: "IfNotPresent"
           env:
             - name: TZ
@@ -1214,7 +1214,7 @@ spec:
               readOnly: true
 
         - name: prometheus-server
-          image: "prom/prometheus:v2.31.0"
+          image: "prom/prometheus:v2.32.1"
           imagePullPolicy: "IfNotPresent"
           env:
             - name: TZ
