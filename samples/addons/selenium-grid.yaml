@@ -320,7 +320,7 @@ spec:
         - name: selenium-event-bus
           image: alvarogg777/event-bus:4.1.2-20220207
           imagePullPolicy: IfNotPresent
-	  env:
+          env:
             - name: SE_BIND_HOST
               value: "true"
           ports:
@@ -477,7 +477,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: selenium-event-bus-config
-	  env:
+          env:
             - name: SE_BIND_HOST
               value: "true"
           ports:
@@ -515,7 +515,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: selenium-event-bus-config
-	  env:
+          env:
             - name: SE_BIND_HOST
               value: "true"
           ports:
