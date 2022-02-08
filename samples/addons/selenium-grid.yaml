@@ -283,6 +283,8 @@ spec:
               value: selenium-session-queue
             - name: SE_SESSION_QUEUE_PORT
               value: "5559"
+            - name: SE_BIND_HOST
+              value: "true"
           envFrom:
             - configMapRef:
                 name: selenium-event-bus-config
@@ -318,6 +320,9 @@ spec:
         - name: selenium-event-bus
           image: alvarogg777/event-bus:4.1.2-20220207
           imagePullPolicy: IfNotPresent
+	  env:
+            - name: SE_BIND_HOST
+              value: "true"
           ports:
             - containerPort: 5557
               protocol: TCP
@@ -472,6 +477,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: selenium-event-bus-config
+	  env:
+            - name: SE_BIND_HOST
+              value: "true"
           ports:
             - containerPort: 5556
               protocol: TCP
@@ -507,6 +515,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: selenium-event-bus-config
+	  env:
+            - name: SE_BIND_HOST
+              value: "true"
           ports:
             - containerPort: 5559
               protocol: TCP
