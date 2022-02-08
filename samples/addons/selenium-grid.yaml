@@ -418,7 +418,7 @@ spec:
             - name: SE_SESSION_QUEUE_PORT
               value: "5559"
             - name: SE_BIND_HOST
-              value: true
+              value: "true"
           ports:
             - containerPort: 4444
               protocol: TCP
