@@ -38,10 +38,10 @@ data:
       #strategy: anonymous
       openid:
         insecure_skip_verify_tls: true
-        client_id: "kiali.alchys.tech"
+        client_id: "kiali.achlys.tech"
         disable_rbac: true
-        client_secret: mMMclG5WSctyNMWAO4jDmdEO07WDmt16
-        issuer_uri: "https://kc.alchys.tech/auth/realms/alborotoproject"
+        client_secret: 4BgMfe0RYFyZLgRidnRIRuAPpjTIsyMe
+        issuer_uri: "https://kc.achlys.tech/auth/realms/achlys"
         scopes: ["openid"]
         username_claim: "sub"
       #openshift:
@@ -90,16 +90,16 @@ data:
       custom_dashboards:
         enabled: true
       grafana:
-        url: http://grafana.alchys.tech
+        url: http://grafana.achlys.tech
         in_cluster_url: "http://grafana.istio-system.svc.cluster.local:3000"
       tracing:
         in_cluster_url: "http://tracing.istio-system.svc.cluster.local:16685"
         use_grpc: true
         service: "tracing"
-        url: http://tracing.alchys.tech
+        url: http://tracing.achlys.tech
       prometheus:
         custom_metrics_url: http://prometheus.istio-system.svc.cluster.local:9090
-        url: http://prometheus.alchys.tech
+        url: http://prometheus.achlys.tech
         component_status:
           app_label: "prometheus"
           is_core: true

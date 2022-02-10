@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: istio
 spec:
   rules:
-  - host: grafana.alchys.tech
+  - host: grafana.achlys.tech
     http:
       paths:
       - path: /
@@ -17,7 +17,7 @@ spec:
             name: grafana
             port:
               number: 3000
-  - host: tracing.alchys.tech
+  - host: tracing.achlys.tech
     http:
       paths:
       - path: /
@@ -27,7 +27,7 @@ spec:
             name: tracing
             port:
               number: 16686
-  - host: prometheus.alchys.tech
+  - host: prometheus.achlys.tech
     http:
       paths:
       - path: /
@@ -37,7 +37,7 @@ spec:
             name: prometheus
             port:
               number: 9090
-  # - host: auth.alchys.tech
+  # - host: auth.achlys.tech
   #   http:
   #     paths:
   #     - path: /

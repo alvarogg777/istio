@@ -16,14 +16,14 @@ spec:
     tls:
       httpsRedirect: false
     hosts:
-    - kiali.alchys.tech
+    - kiali.achlys.tech
   - port:
       number: 443
       name: https-kiali
       protocol: HTTPS
     tls: {}
     hosts:
-    - kiali.alchys.tech
+    - kiali.achlys.tech
 ...
 ---
 apiVersion: networking.istio.io/v1alpha3
@@ -35,7 +35,7 @@ spec:
   gateways:
   - kiali-gateway
   hosts:
-  - kiali.alchys.tech
+  - kiali.achlys.tech
   http:
   - headers:
       request:
