@@ -462,10 +462,10 @@ spec:
           resources:
             limits:
               cpu: 100m
-              memory: 300Mi
+              memory: 800Mi
             requests:
               cpu: 100m
-              memory: 300Mi
+              memory: 400Mi
 ---
 # Source: selenium-grid/templates/session-map-deployment.yaml
 apiVersion: apps/v1
