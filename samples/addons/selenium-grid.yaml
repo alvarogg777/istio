@@ -292,14 +292,14 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 350m
-              memory: 600Mi
+              cpu: 550m
+              memory: 800Mi
             requests:
               cpu: 300m
               memory: 500Mi
 ---
 # Source: selenium-grid/templates/event-bus-deployment.yaml
-apiVersion: apps/v1
+apiVersion: apps/v1distr
 kind: Deployment
 metadata:
   name: selenium-event-bus
@@ -338,7 +338,7 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 10m
+              cpu: 50m
               memory: 300Mi
             requests:
               cpu: 10m
@@ -545,8 +545,8 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 350m
-              memory: 450Mi
+              cpu: 450m
+              memory: 550Mi
             requests:
               cpu: 350m
               memory: 450Mi
