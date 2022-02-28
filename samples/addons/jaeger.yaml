@@ -20,8 +20,10 @@ spec:
     spec:
       containers:
         - name: jaeger
-          image: "docker.io/jaegertracing/all-in-one:1.29"
+          image: "docker.io/jaegertracing/all-in-one:1.31.0"
           env:
+            - name: TZ
+              value: Europe/Madrid
             - name: BADGER_EPHEMERAL
               value: "false"
             - name: SPAN_STORAGE_TYPE
@@ -65,7 +67,7 @@ spec:
   type: ClusterIP
   ports:
     - name: http-query
-      port: 80
+      port: 16686
       protocol: TCP
       targetPort: 16686
     # Note: Change port name if you add '--query.grpc.tls.enabled=true'
