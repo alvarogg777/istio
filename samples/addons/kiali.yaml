@@ -41,7 +41,7 @@ data:
         client_id: "kiali.achlys.tech"
         disable_rbac: true
         client_secret: 4BgMfe0RYFyZLgRidnRIRuAPpjTIsyMe
-        issuer_uri: "https://kc.achlys.tech/auth/realms/achlys"
+        issuer_uri: "https://kc.achlys.tech/auth/realms/achlys.tech"
         scopes: ["openid"]
         username_claim: "sub"
       #openshift:
