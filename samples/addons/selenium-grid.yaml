@@ -290,6 +290,13 @@ spec:
           ports:
             - containerPort: 5553
               protocol: TCP
+          resources:
+            limits:
+              cpu: 350m
+              memory: 600Mi
+            requests:
+              cpu: 300m
+              memory: 500Mi
 ---
 # Source: selenium-grid/templates/event-bus-deployment.yaml
 apiVersion: apps/v1
@@ -329,6 +336,14 @@ spec:
               protocol: TCP
             - containerPort: 4443
               protocol: TCP
+          resources:
+            limits:
+              cpu: 10m
+              memory: 300Mi
+            requests:
+              cpu: 10m
+              memory: 200Mi
+
 ---
 # # Source: selenium-grid/templates/firefox-node-deployment.yaml
 # apiVersion: apps/v1
@@ -444,6 +459,13 @@ spec:
             timeoutSeconds: 10
             successThreshold: 1
             failureThreshold: 10
+          resources:
+            limits:
+              cpu: 100m
+              memory: 300Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
 ---
 # Source: selenium-grid/templates/session-map-deployment.yaml
 apiVersion: apps/v1
@@ -479,6 +501,13 @@ spec:
           ports:
             - containerPort: 5556
               protocol: TCP
+          resources:
+            limits:
+              cpu: 100m
+              memory: 400Mi
+            requests:
+              cpu: 50m
+              memory: 250Mi
 ---
 # Source: selenium-grid/templates/session-queue-deployment.yaml
 apiVersion: apps/v1
@@ -514,3 +543,10 @@ spec:
           ports:
             - containerPort: 5559
               protocol: TCP
+          resources:
+            limits:
+              cpu: 350m
+              memory: 450Mi
+            requests:
+              cpu: 350m
+              memory: 450Mi
