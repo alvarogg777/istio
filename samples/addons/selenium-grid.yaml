@@ -299,7 +299,7 @@ spec:
               memory: 500Mi
 ---
 # Source: selenium-grid/templates/event-bus-deployment.yaml
-apiVersion: apps/v1distr
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: selenium-event-bus
