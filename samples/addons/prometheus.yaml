@@ -673,6 +673,28 @@ rules:
     verbs:
       - get
 ---
+# Source: kube-state-metrics/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:    
+    helm.sh/chart: kube-state-metrics-4.0.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "2.2.0"
+  name: prometheus-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: prometheus-kube-state-metrics
+  namespace: istio-system
+---
 # Source: prometheus/templates/server/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1196,6 +1218,9 @@ spec:
         - name: prometheus-server
           image: "prom/prometheus:v2.33.4"
           imagePullPolicy: "IfNotPresent"
+          env:
+            - name: TZ
+              value: Europe/Madrid
           args:
             - --storage.tsdb.retention.time=15d
             - --config.file=/etc/config/prometheus.yml
