@@ -149,7 +149,7 @@ spec:
       serviceAccountName: istio-egressgateway-service-account
       containers:
         - name: istio-proxy
-          image: "gcr.io/istio-testing/proxyv2:latest"
+          image: "docker.io/querycapistio/proxyv2:1.13.1"
           ports:
             - containerPort: 8080
               protocol: TCP
