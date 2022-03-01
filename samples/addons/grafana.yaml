@@ -37,6 +37,22 @@ data:
     logs = /var/log/grafana
     plugins = /var/lib/grafana/plugins
     provisioning = /etc/grafana/provisioning
+    [server]
+    ;protocol = http
+    ;http_port = 80
+    ;domain = grafana.achlys.tech
+    ;enforce_domain = true
+    root_url = http://grafana.achlys.tech
+    [auth.generic_oauth]
+    enabled = true
+    name = Oauth
+    allow_sign_up = true
+    client_id = grafana.achlys.tech
+    client_secret = 857210d5-052f-437a-84c3-555773baa7e7
+    auth_url = https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/auth
+    token_url = https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/token
+    api_url = https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/userinfo
+    scopes = profile email
 
   datasources.yaml: |
     apiVersion: 1
@@ -135,12 +151,12 @@ spec:
       enableServiceLinks: true
       containers:
         - name: grafana
-          image: "grafana/grafana:8.1.2"
+          image: "grafana/grafana:8.4.2"
           imagePullPolicy: IfNotPresent
           volumeMounts:
-            - name: config
-              mountPath: "/etc/grafana/grafana.ini"
-              subPath: grafana.ini
+            # - name: config
+            #   mountPath: "/etc/grafana/grafana.ini"
+            #   subPath: grafana.ini
             - name: storage
               mountPath: "/var/lib/grafana"
             - name: dashboards-istio
@@ -161,7 +177,8 @@ spec:
               containerPort: 3000
               protocol: TCP
           env:
-            
+            - name: TZ
+              value: Europe/Madrid
             - name: GF_PATHS_DATA
               value: /var/lib/grafana/
             - name: GF_PATHS_LOGS
@@ -170,16 +187,45 @@ spec:
               value: /var/lib/grafana/plugins
             - name: GF_PATHS_PROVISIONING
               value: /etc/grafana/provisioning
-            - name: "GF_AUTH_ANONYMOUS_ENABLED"
-              value: "true"
-            - name: "GF_AUTH_ANONYMOUS_ORG_ROLE"
-              value: "Admin"
+            # - name: "GF_AUTH_ANONYMOUS_ENABLED"
+            #   value: "true"
+            # - name: "GF_AUTH_ANONYMOUS_ORG_ROLE"
+            #   value: "Admin"
             - name: "GF_AUTH_BASIC_ENABLED"
               value: "false"
-            - name: "GF_SECURITY_ADMIN_PASSWORD"
-              value: "-"
-            - name: "GF_SECURITY_ADMIN_USER"
-              value: "-"
+            # - name: "GF_SECURITY_ADMIN_PASSWORD"
+            #   value: "changeme" # "-"
+            # - name: "GF_SECURITY_ADMIN_USER"
+            #   value: "alboroto" # "-"
+            # - name: GF_INSTALL_PLUGINS
+              # value: abhisant-druid-datasource
+            - name: GF_SERVER_DOMAIN
+              value: "grafana.achlys.tech"
+            - name: GF_SERVER_ROOT_URL
+              value: "http://grafana.achlys.tech"
+            - name: GF_AUTH_GENERIC_OAUTH_ENABLED
+              value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_NAME
+              value: "Login Keycloak"
+            - name: GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP
+              value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+              value: "grafana.achlys.tech"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oidc-secrets
+                  key: grafana-client-secret
+            - name: GF_AUTH_GENERIC_OAUTH_SCOPES
+              value: profile
+            - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
+              value: "https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/auth"
+            - name:  GF_AUTH_GENERIC_OAUTH_TOKEN_URL
+              value: "https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/token"
+            - name: GF_AUTH_GENERIC_OAUTH_API_URL
+              value: "https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/userinfo"
+            - name: GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH
+              value: "contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'"
           livenessProbe:
             failureThreshold: 10
             httpGet:
