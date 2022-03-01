@@ -1556,7 +1556,7 @@ spec:
         fsGroup: 1337
       containers:
         - name: discovery
-          image: "gcr.io/istio-testing/pilot:latest"
+          image: "docker.io/querycapistio/pilot:1.12.4"
           args:
           - "discovery"
           - --monitoringAddr=:15014
