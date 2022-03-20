@@ -40,7 +40,7 @@ data:
         insecure_skip_verify_tls: true
         client_id: "kiali.achlys.tech"
         disable_rbac: true
-        client_secret: 4A58n3eVU1uKYUi487EQVPbz4OIWGIPI
+        client_secret: xBsxiHJziQrk0VFswSDyP4DA9UIRrIRT
         issuer_uri: "https://kc.achlys.tech/auth/realms/achlys.tech"
         scopes: ["openid"]
         username_claim: "sub"
