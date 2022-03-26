@@ -21,7 +21,9 @@ spec:
       number: 443
       name: https-kiali
       protocol: HTTPS
-    tls: {}
+    tls:
+      mode: SIMPLE
+      credentialName: achlys-tls
     hosts:
     - kiali.achlys.tech
 ...
