@@ -23,9 +23,14 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: achlys-tls
+      privateKey: /etc/istio/achlys-tls/tls.key
+      serverCertificate: /etc/istio/achlys-tls/tls.crt
+      # credentialName: achlys-tls
     hosts:
     - kiali.achlys.tech
+    - grafana.achlys.tech
+    - prometheus.achlys.tech
+    - tracing.achlys.tech
 ...
 ---
 apiVersion: networking.istio.io/v1alpha3
@@ -60,5 +65,7 @@ spec:
   host: kiali
   trafficPolicy:
     tls:
-      mode: DISABLE
+      mode: SIMPLE
+      privateKey: /etc/istio/achlys-tls/tls.key
+      # mode: DISABLE
 ...
