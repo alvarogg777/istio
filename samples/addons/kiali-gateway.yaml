@@ -23,9 +23,9 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      privateKey: /etc/istio/achlys-tls/tls.key
-      serverCertificate: /etc/istio/achlys-tls/tls.crt
-      # credentialName: achlys-tls
+      # privateKey: /etc/istio/achlys-tls/tls.key
+      # serverCertificate: /etc/istio/achlys-tls/tls.crt
+      credentialName: achlys-tls
     hosts:
     - kiali.achlys.tech
     - grafana.achlys.tech
