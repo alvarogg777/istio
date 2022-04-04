@@ -6,6 +6,13 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: istio
 spec:
+  tls:
+  - hosts:
+      - grafana.achlys.tech
+      - kiali.achlys.tech
+      - prometheus.achlys.tech
+      - tracing.achlys.tech
+    secretName: achlys-tls
   rules:
   - host: grafana.achlys.tech
     http:
