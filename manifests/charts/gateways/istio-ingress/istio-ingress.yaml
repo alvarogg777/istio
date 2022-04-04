@@ -268,8 +268,8 @@ spec:
             mountPath: "/etc/istio/ingressgateway-ca-certs"
             readOnly: true
           - name: achlys-tls
-            secretName: achlys-tls
             mountPath: /etc/istio/achlys-tls
+            readOnly: true
       volumes:
       - name: istiod-ca-cert
         configMap:
@@ -306,6 +306,10 @@ spec:
         secret:
           secretName: "istio-ingressgateway-ca-certs"
           optional: true
+      - name: achlys-tls
+        secret:
+            secretName: achlys-tls
+            optional: true
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
