@@ -7,8 +7,8 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 data:
   SE_EVENT_BUS_HOST: selenium-event-bus
@@ -25,8 +25,8 @@ metadata:
     name: selenium-chrome-node
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   selector:
@@ -46,8 +46,8 @@ metadata:
     app: selenium-distributor
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   selector:
@@ -68,8 +68,8 @@ metadata:
     app: selenium-event-bus
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   selector:
@@ -98,8 +98,8 @@ spec:
 #     name: selenium-firefox-node
 #     app.kubernetes.io/managed-by: helm
 #     app.kubernetes.io/instance: selenium-grid
-#     app.kubernetes.io/version: 4.1.2
-#     app.kubernetes.io/component: selenium-grid-4.1.2
+#     app.kubernetes.io/version: 4.1.3
+#     app.kubernetes.io/component: selenium-grid-4.1.3
 #     helm.sh/chart: selenium-grid-0.1.0
 # spec:
 #   selector:
@@ -119,8 +119,8 @@ spec:
 #     name: selenium-opera-node
 #     app.kubernetes.io/managed-by: helm
 #     app.kubernetes.io/instance: selenium-grid
-#     app.kubernetes.io/version: 4.1.2
-#     app.kubernetes.io/component: selenium-grid-4.1.2
+#     app.kubernetes.io/version: 4.1.3
+#     app.kubernetes.io/component: selenium-grid-4.1.3
 #     helm.sh/chart: selenium-grid-0.1.0
 # spec:
 #   selector:
@@ -140,8 +140,8 @@ metadata:
     app: selenium-router
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   selector:
@@ -162,8 +162,8 @@ metadata:
     app: selenium-session-map
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   selector:
@@ -184,8 +184,8 @@ metadata:
     app: selenium-session-queue
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   selector:
@@ -207,8 +207,8 @@ metadata:
     app.kubernetes.io/name: selenium-chrome-node
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   replicas: 2
@@ -225,7 +225,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-chrome-node
-          image: alvarogg777/node-chromium:4.1.2-20220207
+          image: alvarogg777/node-chromium:4.1.3-20221504
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
@@ -257,8 +257,8 @@ metadata:
     app.kubernetes.io/name: selenium-distributor
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   replicas: 1
@@ -273,7 +273,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-distributor
-          image: alvarogg777/distributor:4.1.2-20220207
+          image: alvarogg777/distributor:4.1.3-20221504
           imagePullPolicy: IfNotPresent
           env:
             - name: SE_SESSIONS_MAP_HOST
@@ -308,8 +308,8 @@ metadata:
     app.kubernetes.io/name: selenium-event-bus
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   replicas: 1
@@ -324,7 +324,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-event-bus
-          image: alvarogg777/event-bus:4.1.2-20220207
+          image: alvarogg777/event-bus:4.1.3-20221504
           imagePullPolicy: IfNotPresent
           env:
             - name: SE_BIND_HOST
@@ -355,8 +355,8 @@ spec:
 #     app.kubernetes.io/name: selenium-firefox-node
 #     app.kubernetes.io/managed-by: helm
 #     app.kubernetes.io/instance: selenium-grid
-#     app.kubernetes.io/version: 4.1.2
-#     app.kubernetes.io/component: selenium-grid-4.1.2
+#     app.kubernetes.io/version: 4.1.3
+#     app.kubernetes.io/component: selenium-grid-4.1.3
 #     helm.sh/chart: selenium-grid-0.1.0
 # spec:
 #   replicas: 1
@@ -373,7 +373,7 @@ spec:
 #         - name: regcred
 #       containers:
 #         - name: selenium-firefox-node
-#           image: alvarogg777/node-firefox:4.1.2-20220207
+#           image: alvarogg777/node-firefox:4.1.3-20221504
 #           imagePullPolicy: IfNotPresent
 #           envFrom:
 #             - configMapRef:
@@ -405,8 +405,8 @@ metadata:
     app.kubernetes.io/name: selenium-router
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   replicas: 1
@@ -421,7 +421,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-router
-          image: alvarogg777/router:4.1.2-20220207
+          image: alvarogg777/router:4.1.3-20221504
           imagePullPolicy: IfNotPresent
           env:
             - name: SE_DISTRIBUTOR_HOST
@@ -477,8 +477,8 @@ metadata:
     app.kubernetes.io/name: selenium-session-map
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   replicas: 1
@@ -493,7 +493,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-session-map
-          image: alvarogg777/sessions:4.1.2-20220207
+          image: alvarogg777/sessions:4.1.3-20221504
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -519,8 +519,8 @@ metadata:
     app.kubernetes.io/name: selenium-session-queue
     app.kubernetes.io/managed-by: helm
     app.kubernetes.io/instance: selenium-grid
-    app.kubernetes.io/version: 4.1.2
-    app.kubernetes.io/component: selenium-grid-4.1.2
+    app.kubernetes.io/version: 4.1.3
+    app.kubernetes.io/component: selenium-grid-4.1.3
     helm.sh/chart: selenium-grid-0.1.0
 spec:
   replicas: 1
@@ -535,7 +535,7 @@ spec:
         - name: regcred
       containers:
         - name: selenium-session-queue
-          image: alvarogg777/session-queue:4.1.2-20220207
+          image: alvarogg777/session-queue:4.1.3-20221504
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
