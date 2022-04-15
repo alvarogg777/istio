@@ -117,7 +117,7 @@ data:
       clustering:
         enabled: true
     login_token:
-      signing_key: CHANGEME
+      signing_key: b670c2157bf4351f23817442c26f8a18
     server:
       metrics_enabled: true
       metrics_port: 9090
