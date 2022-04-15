@@ -1,0 +1,35 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: kiali-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http-kiali
+      protocol: HTTP
+    # https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings
+    tls:
+      httpsRedirect: false
+    hosts:
+    - kiali.achlys.tech
+  - port:
+      number: 443
+      name: https-kiali
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      # privateKey: /etc/istio/achlys-tls/tls.key
+      # serverCertificate: /etc/istio/achlys-tls/tls.crt
+      credentialName: achlys-tls
+    hosts:
+    - kiali.achlys.tech
+    - grafana.achlys.tech
+    - prometheus.achlys.tech
+    - tracing.achlys.tech
+...
+---
