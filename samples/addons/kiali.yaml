@@ -6,12 +6,21 @@ metadata:
   name: kiali
   namespace: istio-system
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
 ...
@@ -23,12 +32,21 @@ metadata:
   name: kiali
   namespace: istio-system
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
 data:
@@ -86,13 +104,36 @@ data:
       service_annotations: {}
       service_type: ""
       tolerations: []
+<<<<<<< Updated upstream
       version_label: v1.50.0
+=======
+      version_label: v1.54.0
+>>>>>>> Stashed changes
       view_only_mode: false
     external_services:
       custom_dashboards:
         enabled: true
+<<<<<<< Updated upstream
       istio:
         root_namespace: istio-system
+=======
+      grafana:
+      	enabled: true
+        url: http://grafana.achlys.tech
+        in_cluster_url: "http://grafana.istio-system.svc.cluster.local:3000"
+      tracing:
+        in_cluster_url: "http://tracing.istio-system.svc.cluster.local:16685"
+        use_grpc: true
+        service: "tracing"
+        url: http://tracing.achlys.tech
+      prometheus:
+        custom_metrics_url: http://prometheus.istio-system.svc.cluster.local:9090
+        url: http://prometheus.achlys.tech
+        component_status:
+          app_label: "prometheus"
+          is_core: true
+          namespace: "istio-system"
+>>>>>>> Stashed changes
     identity:
       cert_file: ""
       private_key_file: ""
@@ -124,12 +165,21 @@ kind: ClusterRole
 metadata:
   name: kiali-viewer
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
 rules:
@@ -214,12 +264,21 @@ kind: ClusterRole
 metadata:
   name: kiali
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
 rules:
@@ -311,12 +370,21 @@ kind: ClusterRoleBinding
 metadata:
   name: kiali
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
 roleRef:
@@ -336,12 +404,21 @@ metadata:
   name: kiali-controlplane
   namespace: istio-system
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
 rules:
@@ -369,12 +446,21 @@ metadata:
   name: kiali-controlplane
   namespace: istio-system
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
 roleRef:
@@ -394,12 +480,21 @@ metadata:
   name: kiali
   namespace: istio-system
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
   annotations:
@@ -423,12 +518,21 @@ metadata:
   name: kiali
   namespace: istio-system
   labels:
+<<<<<<< Updated upstream
     helm.sh/chart: kiali-server-1.50.0
     app: kiali
     app.kubernetes.io/name: kiali
     app.kubernetes.io/instance: kiali
     version: "v1.50.0"
     app.kubernetes.io/version: "v1.50.0"
+=======
+    helm.sh/chart: kiali-server-1.54.0
+    app: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/instance: kiali
+    version: "v1.54.0"
+    app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
 spec:
@@ -446,12 +550,21 @@ spec:
     metadata:
       name: kiali
       labels:
+<<<<<<< Updated upstream
         helm.sh/chart: kiali-server-1.50.0
         app: kiali
         app.kubernetes.io/name: kiali
         app.kubernetes.io/instance: kiali
         version: "v1.50.0"
         app.kubernetes.io/version: "v1.50.0"
+=======
+        helm.sh/chart: kiali-server-1.54.0
+        app: kiali
+        app.kubernetes.io/name: kiali
+        app.kubernetes.io/instance: kiali
+        version: "v1.54.0"
+        app.kubernetes.io/version: "v1.54.0"
+>>>>>>> Stashed changes
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/part-of: "kiali"
         sidecar.istio.io/inject: "false"
