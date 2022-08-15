@@ -1,0 +1,65 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: istio-system
+  namespace: istio-system
+  annotations:
+    kubernetes.io/ingress.class: istio
+spec:
+  tls:
+  - hosts:
+      - grafana.achlys.tech
+      - kiali.achlys.tech
+      - prometheus.achlys.tech
+      - tracing.achlys.tech
+    secretName: achlys-tls
+  rules:
+  - host: grafana.achlys.tech
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
+  - host: tracing.achlys.tech
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tracing
+            port:
+              number: 16686
+  - host: prometheus.achlys.tech
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus
+            port:
+              number: 9090
+  - host: kiali.achlys.tech
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kiali
+            port:
+              number: 20001
+  # - host: auth.achlys.tech
+  #   http:
+  #     paths:
+  #     - path: /
+  #       pathType: Prefix
+  #       backend:
+  #         serviceName: authelia-service
+  #         servicePort: 80
+
