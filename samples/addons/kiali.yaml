@@ -34,10 +34,18 @@ metadata:
 data:
   config.yaml: |
     auth:
-      openid: {}
-      openshift:
-        client_id_prefix: kiali
-      strategy: anonymous
+      strategy: openid
+      #strategy: anonymous
+      openid:
+        insecure_skip_verify_tls: true
+        client_id: "kiali.achlys.tech"
+        disable_rbac: true
+        client_secret: 5j7iIXrgUYHsXmO8OrvPw9u9OLlIapGA
+        issuer_uri: "https://kc.achlys.tech/auth/realms/achlys.tech"
+        scopes: ["openid"]
+        username_claim: "sub"
+      #openshift:
+      #  client_id_prefix: kiali
     deployment:
       accessible_namespaces:
       - '**'
@@ -126,7 +134,7 @@ data:
         ignore:
         - KIA1201
     login_token:
-      signing_key: CHANGEME00000000
+      signing_key: b670c2157bf4351f23817442c26f8a18
     server:
       metrics_enabled: true
       metrics_port: 9090
@@ -416,7 +424,7 @@ metadata:
     app.kubernetes.io/version: "v1.54.0"
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: "kiali"
-  annotations:
+  annotations: {}
 spec:
   ports:
   - name: http
