@@ -59,7 +59,7 @@ data:
       image_version: v1.50
       ingress:
         additional_labels: {}
-        class_name: nginx
+        class_name: traefik
         override_yaml:
           metadata: {}
       ingress_enabled: false
