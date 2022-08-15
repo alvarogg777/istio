@@ -102,7 +102,6 @@ data:
       istio:
         root_namespace: istio-system
       grafana:
-      	enabled: true
         url: http://grafana.achlys.tech
         in_cluster_url: "http://grafana.istio-system.svc.cluster.local:3000"
       tracing:
