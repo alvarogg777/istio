@@ -1,0 +1,1 @@
+helm template -nistio-system ingress .  --set gateways.istio-ingressgateway.env.TZ="Europe/Madrid" --set gateways.istio-ingressgateway.externalTrafficPolicy="Local" --set global.hub="istio" --set global.tag="1.17.2" > istio-ingress.yaml

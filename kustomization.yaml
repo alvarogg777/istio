@@ -1,0 +1,7 @@
+resources:
+- ./manifests/charts/base/
+- ./manifests/charts/istio-control/istio-discovery/
+- ./manifests/charts/gateways/istio-egress/
+- ./manifests/charts/gateways/istio-ingress/
+- ./samples/addons/
+namespace: istio-system
