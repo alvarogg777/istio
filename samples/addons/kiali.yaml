@@ -34,10 +34,18 @@ metadata:
 data:
   config.yaml: |
     auth:
-      openid: {}
-      openshift:
-        client_id_prefix: kiali
-      strategy: anonymous
+      strategy: openid
+      #strategy: anonymous
+      openid:
+        insecure_skip_verify_tls: true
+        client_id: "kiali.achlys.tech"
+        disable_rbac: true
+        client_secret: U5Jq7RWMdUEzLgL7dwOhR5MHPtzrtSRM
+        issuer_uri: "https://kc.achlys.tech/auth/realms/achlys.tech"
+        scopes: ["openid"]
+        username_claim: "sub"
+      #openshift:
+      #  client_id_prefix: kiali
     deployment:
       accessible_namespaces:
       - '**'
@@ -59,7 +67,7 @@ data:
       image_version: v1.63
       ingress:
         additional_labels: {}
-        class_name: nginx
+        class_name: traefik
         override_yaml:
           metadata: {}
       ingress_enabled: false
@@ -92,6 +100,21 @@ data:
     external_services:
       custom_dashboards:
         enabled: true
+      grafana:
+        url: http://grafana.achlys.tech
+        in_cluster_url: "http://grafana.istio-system.svc.cluster.local:3000"
+      tracing:
+        in_cluster_url: "http://tracing.istio-system.svc.cluster.local:16685"
+        use_grpc: true
+        service: "tracing"
+        url: http://tracing.achlys.tech
+      prometheus:
+        custom_metrics_url: http://prometheus.istio-system.svc.cluster.local:9090
+        url: http://prometheus.achlys.tech
+        component_status:
+          app_label: "prometheus"
+          is_core: true
+          namespace: "istio-system"
       istio:
         root_namespace: istio-system
     identity:
@@ -505,6 +528,8 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 30
         env:
+        - name: TZ
+          value: Europe/Madrid
         - name: ACTIVE_NAMESPACE
           valueFrom:
             fieldRef:

@@ -26,18 +26,34 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   allow-snippet-annotations: "false"
-  grafana.ini: |
-    [analytics]
-    check_for_updates = true
-    [grafana_net]
-    url = https://grafana.net
-    [log]
-    mode = console
-    [paths]
-    data = /var/lib/grafana/
-    logs = /var/log/grafana
-    plugins = /var/lib/grafana/plugins
-    provisioning = /etc/grafana/provisioning
+  # grafana.ini: |
+  #   [analytics]
+  #   check_for_updates = true
+  #   [grafana_net]
+  #   url = https://grafana.net
+  #   [log]
+  #   mode = console
+  #   [paths]
+  #   data = /var/lib/grafana/
+  #   logs = /var/log/grafana
+  #   plugins = /var/lib/grafana/plugins
+  #   provisioning = /etc/grafana/provisioning
+  #   [server]
+  #   ;protocol = http
+  #   ;http_port = 80
+  #   ;domain = grafana.achlys.tech
+  #   ;enforce_domain = true
+  #   root_url = http://grafana.achlys.tech
+  #   [auth.generic_oauth]
+  #   enabled = true
+  #   name = Oauth
+  #   allow_sign_up = true
+  #   client_id = grafana.achlys.tech
+  #   client_secret = 5o44ccmUvmxOgz1dmpCN7RgzjxGA8lgr
+  #   auth_url = https://kc.achlys.tech/auth/realms/achlys/protocol/openid-connect/auth
+  #   token_url = https://kc.achlys.tech/auth/realms/achlys/protocol/openid-connect/token
+  #   api_url = https://kc.achlys.tech/auth/realms/achlys/protocol/openid-connect/userinfo
+  #   scopes = profile email
 
   datasources.yaml: |
     apiVersion: 1
@@ -139,9 +155,9 @@ spec:
           image: "grafana/grafana:9.0.1"
           imagePullPolicy: IfNotPresent
           volumeMounts:
-            - name: config
-              mountPath: "/etc/grafana/grafana.ini"
-              subPath: grafana.ini
+            # - name: config
+            #   mountPath: "/etc/grafana/grafana.ini"
+            #   subPath: grafana.ini
             - name: storage
               mountPath: "/var/lib/grafana"
             - name: dashboards-istio
@@ -170,16 +186,50 @@ spec:
               value: /var/lib/grafana/plugins
             - name: GF_PATHS_PROVISIONING
               value: /etc/grafana/provisioning
-            - name: "GF_AUTH_ANONYMOUS_ENABLED"
-              value: "true"
-            - name: "GF_AUTH_ANONYMOUS_ORG_ROLE"
-              value: "Admin"
+            # - name: "GF_AUTH_ANONYMOUS_ENABLED"
+            #   value: "true"
+            # - name: "GF_AUTH_ANONYMOUS_ORG_ROLE"
+            #   value: "Admin"
             - name: "GF_AUTH_BASIC_ENABLED"
               value: "false"
-            - name: "GF_SECURITY_ADMIN_PASSWORD"
-              value: "-"
-            - name: "GF_SECURITY_ADMIN_USER"
-              value: "-"
+            # - name: "GF_SECURITY_ADMIN_PASSWORD"
+            #   value: "changeme" # "-"
+            # - name: "GF_SECURITY_ADMIN_USER"
+            #   value: "alboroto" # "-"
+            # - name: GF_INSTALL_PLUGINS
+              # value: abhisant-druid-datasource
+            #- name: GF_SECURITY_COOKIE_SAMESITE
+            #  value: "true"
+            - name: GF_SERVER_DOMAIN
+              value: "grafana.achlys.tech"
+            - name: GF_SERVER_ROOT_URL
+              value: "http://grafana.achlys.tech"
+            - name: GF_AUTH_GENERIC_OAUTH_ENABLED
+              value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_NAME
+              value: "Login Keycloak"
+            - name: GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP
+              value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+              value: grafana.achlys.tech
+            #- name: GF_AUTH_ANONYMOUS_ORG_NAME
+            #  value: grafana.achlys.tech
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oidc-secrets
+                  key: grafana-client-secret
+            - name: GF_AUTH_GENERIC_OAUTH_SCOPES
+              value: "profile"
+            - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
+              value: "https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/auth"
+            - name:  GF_AUTH_GENERIC_OAUTH_TOKEN_URL
+              value: "https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/token"
+            - name: GF_AUTH_GENERIC_OAUTH_API_URL
+              value: "https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/userinfo"
+            - name: GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH
+              value: "contains(resource_access[*], 'admin') && 'Admin' || contains(resource_access[*], 'editor') && 'Editor' || 'Viewer'"
+              # value: "preferred_username='alboroto' && 'Admin'"
           livenessProbe:
             failureThreshold: 10
             httpGet:

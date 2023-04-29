@@ -21,11 +21,11 @@ spec:
       number: 443
       name: https-kiali
       protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      # privateKey: /etc/istio/achlys-tls/tls.key
-      # serverCertificate: /etc/istio/achlys-tls/tls.crt
-      credentialName: achlys-tls
+    tls: {}
+      #   mode: SIMPLE
+      #   privateKey: /etc/istio/achlys-tls/tls.key
+      #   serverCertificate: /etc/istio/achlys-tls/tls.crt
+      # credentialName: achlys-tls
     hosts:
     - kiali.achlys.tech
     - grafana.achlys.tech
@@ -33,3 +33,37 @@ spec:
     - tracing.achlys.tech
 ...
 ---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: kiali-virtualservice
+  namespace: istio-system
+spec:
+  gateways:
+  - kiali-gateway
+  hosts:
+  - kiali.achlys.tech
+  http:
+  - headers:
+      request:
+        set:
+          X-Forwarded-Port: "80"
+    route:
+    - destination:
+        host: kiali.istio-system.svc.cluster.local
+        port:
+          number: 20001
+      weight: 100
+...
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: kiali-destinationrule
+  namespace: istio-system
+spec:
+  host: kiali
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+...

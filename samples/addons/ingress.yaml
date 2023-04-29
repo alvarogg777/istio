@@ -6,13 +6,13 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: istio
 spec:
-  tls:
-  - hosts:
-      - grafana.achlys.tech
-      - kiali.achlys.tech
-      - prometheus.achlys.tech
-      - tracing.achlys.tech
-    secretName: achlys-tls
+  # tls:
+  # - hosts:
+  #     - grafana.achlys.tech
+  #     - kiali.achlys.tech
+  #     - prometheus.achlys.tech
+  #     - tracing.achlys.tech
+  #   secretName: achlys-tls
   rules:
   - host: grafana.achlys.tech
     http:
@@ -33,7 +33,7 @@ spec:
           service:
             name: tracing
             port:
-              number: 16686
+              number: 80
   - host: prometheus.achlys.tech
     http:
       paths:
@@ -44,16 +44,16 @@ spec:
             name: prometheus
             port:
               number: 9090
-  - host: kiali.achlys.tech
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: kiali
-            port:
-              number: 20001
+  # - host: kiali.achlys.tech
+  #   http:
+  #     paths:
+  #     - path: /
+  #       pathType: Prefix
+  #       backend:
+  #         service:
+  #           name: kiali
+  #           port:
+  #             number: 20001
   # - host: auth.achlys.tech
   #   http:
   #     paths:
