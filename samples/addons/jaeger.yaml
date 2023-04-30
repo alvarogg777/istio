@@ -15,13 +15,18 @@ spec:
         app: jaeger
         sidecar.istio.io/inject: "false"
       annotations:
+        sidecar.istio.io/inject: "false"
         prometheus.io/scrape: "true"
         prometheus.io/port: "14269"
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: jaeger
-          image: "docker.io/jaegertracing/all-in-one:1.35"
+          image: "docker.io/jaegertracing/all-in-one:1.44.0"
           env:
+            - name: TZ
+              value: Europe/Madrid
             - name: BADGER_EPHEMERAL
               value: "false"
             - name: SPAN_STORAGE_TYPE
