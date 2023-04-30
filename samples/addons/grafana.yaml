@@ -53,7 +53,7 @@ data:
     auth_url = https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/auth
     token_url = https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/token
     api_url = https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/userinfo
-    scopes = openid profile grafana-admins offline_access email
+    scopes = openid profile offline_access email
     role_attribute_path = contains(roles[*], 'admin') && 'GrafanaAdmin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
     
   datasources.yaml: |
@@ -227,7 +227,7 @@ spec:
             # - name: GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_NAME
             #   value: “email”
             - name: GF_AUTH_GENERIC_OAUTH_SCOPES
-              value: openid profile grafana-admins offline_access email
+              value: openid profile offline_access email
             - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
               value: "https://kc.achlys.tech/auth/realms/achlys.tech/protocol/openid-connect/auth"
             - name:  GF_AUTH_GENERIC_OAUTH_TOKEN_URL
