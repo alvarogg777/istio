@@ -225,7 +225,8 @@ spec:
         - name: regcred
       containers:
         - name: selenium-chrome-node
-          image: alvarogg777/node-chromium:4.4.0-20220815
+          # image: alvarogg777/node-chromium:4.4.0-20220815
+          image: seleniarm/node-chromium:4.9.0-20230422
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
@@ -273,7 +274,8 @@ spec:
         - name: regcred
       containers:
         - name: selenium-distributor
-          image: alvarogg777/distributor:4.4.0-20220815
+          # image: alvarogg777/distributor:4.4.0-20220815
+          image: seleniarm/distributor:4.9.0-20230422
           imagePullPolicy: IfNotPresent
           env:
             - name: SE_SESSIONS_MAP_HOST
@@ -324,7 +326,8 @@ spec:
         - name: regcred
       containers:
         - name: selenium-event-bus
-          image: alvarogg777/event-bus:4.4.0-20220815
+          # image: alvarogg777/event-bus:4.4.0-20220815
+          image: seleniarm/event-bus:4.9.0-20230422
           imagePullPolicy: IfNotPresent
           env:
             - name: SE_BIND_HOST
@@ -421,7 +424,8 @@ spec:
         - name: regcred
       containers:
         - name: selenium-router
-          image: alvarogg777/router:4.4.0-20220815
+          # image: alvarogg777/router:4.4.0-20220815
+          image: seleniarm/router:4.9.0-20230422
           imagePullPolicy: IfNotPresent
           env:
             - name: SE_DISTRIBUTOR_HOST
@@ -493,7 +497,8 @@ spec:
         - name: regcred
       containers:
         - name: selenium-session-map
-          image: alvarogg777/sessions:4.4.0-20220815
+          # image: alvarogg777/sessions:4.4.0-20220815
+          image: seleniarm/sessions:4.9.0-20230422
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -535,7 +540,8 @@ spec:
         - name: regcred
       containers:
         - name: selenium-session-queue
-          image: alvarogg777/session-queue:4.4.0-20220815
+          # image: alvarogg777/session-queue:4.4.0-20220815
+          image: seleniarm/session-queue:4.9.0-20230422
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
